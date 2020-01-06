@@ -51,7 +51,7 @@
   "Add overlay to display STRING at POS."
   (let ((ov (make-overlay (1- pos) pos)))
     (overlay-put ov 'dired-git-overlay t)
-    (overlay-put ov 'before-string string)))
+    (overlay-put ov 'after-string string)))
 
 (defun dired-git--overlays-in (beg end)
   "Get all dired-git overlays between BEG to END."
