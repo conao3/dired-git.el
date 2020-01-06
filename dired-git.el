@@ -5,7 +5,7 @@
 ;; Author: Naoya Yamashita <conao3@gmail.com>
 ;; Version: 0.0.1
 ;; Keywords: tools
-;; Package-Requires: ((emacs "26"))
+;; Package-Requires: ((emacs "24.3"))
 ;; URL: https://github.com/conao3/dired-git.el
 
 ;; This program is free software: you can redistribute it and/or modify
@@ -27,6 +27,8 @@
 
 
 ;;; Code:
+
+(require 'cl-lib)
 
 (defgroup dired-git nil
   "Git integration for dired."
@@ -50,6 +52,23 @@
   (let ((ov (make-overlay (1- pos) pos)))
     (overlay-put ov 'dired-git-overlay t)
     (overlay-put ov 'before-string string)))
+
+(defun dired-git--overlays-in (beg end)
+  "Get all dired-git overlays between BEG to END."
+  (cl-remove-if-not
+   (lambda (ov)
+     (overlay-get ov 'dired-git-overlay))
+   (overlays-in beg end)))
+
+(defun dired-git--overlays-at (pos)
+  "Get dired-git overlays at POS."
+  (apply #'dired-git--overlays-in `(,pos ,pos)))
+
+(defun dired-git--remove-all-overlays ()
+  "Remove all `dired-git' overlays."
+  (save-restriction
+    (widen)
+    (mapc #'delete-overlay (dired-git--overlays-in (point-min) (point-max)))))
 
 (provide 'dired-git)
 
