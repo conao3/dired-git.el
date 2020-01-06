@@ -34,6 +34,23 @@
   :group 'tools
   :link '(url-link :tag "Github" "https://github.com/conao3/dired-git.el"))
 
+(defface dired-git-branch-master
+  '((t (:foreground "green" :weight bold)))
+  "Face of showing branch master.")
+
+(defface dired-git-branch-else
+  '((t (:foreground "cyan" :weight bold)))
+  "Face of showing branch else.")
+
+
+;;; Manage Overlays
+
+(defun dired-git--add-overlay (pos string)
+  "Add overlay to display STRING at POS."
+  (let ((ov (make-overlay (1- pos) pos)))
+    (overlay-put ov 'dired-git-overlay t)
+    (overlay-put ov 'before-string string)))
+
 (provide 'dired-git)
 
 ;; Local Variables:
