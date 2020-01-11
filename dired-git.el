@@ -108,7 +108,8 @@ If ROOTONLY is non-nil, return nil when DIR doesn't git root directory."
          (promise:make-process
           shell-file-name
           shell-command-switch
-          (format "cd %s; git rev-parse --abbrev-ref HEAD" git-dir))
+          (format "cd %s; git rev-parse --abbrev-ref HEAD"
+                  (shell-quote-argument git-dir)))
          (lambda (res)
            (seq-let (stdin _stderr) res
              (promise-resolve (string-trim stdin))))
