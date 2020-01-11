@@ -156,14 +156,18 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
                        (when (file-directory-p path)
                          path))
                    (locate-dominating-file path ".git"))))
-      (when (string-match-p "/\\.\\.?\\'" path)
-        (setq status (await
-                      (promise-all
-                       (vector
-                        (dired-git--promise-get-branch git-dir)
-                        (dired-git--promise-git-modified git-dir)
-                        (dired-git--promise-git-ff git-dir)))))
-        (dired-git--add-overlay (pos) "  ")))))
+      (condition-case err
+          (when (string-match-p "/\\.\\.?\\'" path)
+            (setq status (await
+                          (promise-all
+                           (vector
+                            (dired-git--promise-get-branch git-dir)
+                            (dired-git--promise-git-modified git-dir)
+                            (dired-git--promise-git-ff git-dir)))))
+            (warn "%s: %s" git-dir status)
+            (dired-git--add-overlay (pos) (format "%s " status)))
+        (error
+         (warn err))))))
 
 (defun dired-git--add-status ()
   "Add git status for `current-buffer'."
