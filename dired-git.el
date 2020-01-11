@@ -133,10 +133,9 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   "Add git status for `current-buffer'."
   (save-excursion
     (goto-char (point-min))
-    (let (data)
-      (while (not (eobp))
-        (dired-git--add-git-annotation (point))
-        (dired-next-line 1)))))
+    (while (not (eobp))
+      (dired-git--add-git-annotation (point))
+      (dired-next-line 1))))
 
 
 ;;; Main
