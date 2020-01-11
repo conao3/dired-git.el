@@ -5,7 +5,7 @@
 ;; Author: Naoya Yamashita <conao3@gmail.com>
 ;; Version: 0.0.1
 ;; Keywords: tools
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "26.1") (async-await "1.0"))
 ;; URL: https://github.com/conao3/dired-git.el
 
 ;; This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,9 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'seq)
+(require 'dired)
+(require 'async-await)
 
 (defgroup dired-git nil
   "Git integration for dired."
@@ -43,6 +46,26 @@
 (defface dired-git-branch-else
   '((t (:foreground "cyan" :weight bold)))
   "Face of showing branch else.")
+
+(cl-defstruct (dired-git-status
+               (:constructor nil)
+               (:constructor dired-git-status-new)
+               (:copier nil))
+  "Structure reporesenting an git status object.
+Slots:
+
+`path'
+    Path of directory or file as string.
+
+`branch'
+    Git branch as string
+
+`modified'
+    If non-nil, work tree has some changes.
+
+`merge-ff'
+    If non-nil, work tree can merge via fast-forward."
+  path branch modified merge-ff)
 
 
 ;;; Manage Overlays
@@ -69,6 +92,56 @@
   (save-restriction
     (widen)
     (mapc #'delete-overlay (dired-git--overlays-in (point-min) (point-max)))))
+
+
+;;; Function
+
+(defun dired-git--promise-get-branch (&optional dir rootonly)
+  "Return promise to get branch name for DIR or `default-directory'.
+If ROOTONLY is non-nil, return nil when DIR doesn't git root directory."
+  (let ((dir* (or dir default-directory)))
+    (when-let ((git-dir
+                (if rootonly
+                    (file-directory-p (expand-file-name ".git" dir*))
+                  (locate-dominating-file dir* ".git"))))
+        (promise-then
+         (promise:make-process
+          shell-file-name
+          shell-command-switch
+          (format "cd %s; git rev-parse --abbrev-ref HEAD" git-dir))
+         (lambda (res)
+           (seq-let (stdin _stderr) res
+             (promise-resolve (string-trim stdin))))
+         (lambda (reason)
+           (promise-reject `(fail-get-branch ,reason)))))))
+
+(async-defun dired-git--add-git-annotation (point)
+  "Add git annotation for POINT in dired buffer."
+  (let (status)
+    (when-let ((path (dired-get-filename nil t)))
+      (when (string-match-p "/\\.\\.?\\'" path)
+        (setq status (await dired-git--promise-get-branch path 'rootonly))
+        (dired-git--add-overlay (point) "  ")))))
+
+(defun dired-git--add-status ()
+  "Add git status for `current-buffer'."
+  (save-excursion
+    (goto-char (point-min))
+    (let (data)
+      (while (not (eobp))
+        (dired-git--add-git-annotation (point))
+        (dired-next-line 1)))))
+
+
+;;; Main
+
+;;;###autoload
+(defun dired-git-setup (&optional buf)
+  "Setup dired-git for BUF or `current-buffer'."
+  (with-current-buffer (or buf (current-buffer))
+    (save-restriction
+      (widen)
+      (dired-git--add-status))))
 
 (provide 'dired-git)
 
