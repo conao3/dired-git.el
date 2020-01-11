@@ -175,7 +175,7 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   (save-excursion
     (goto-char (point-min))
     (while (not (eobp))
-      (dired-git--add-git-annotation (point))
+      (dired-git--add-git-annotation 'rootonly)
       (dired-next-line 1))))
 
 
