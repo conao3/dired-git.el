@@ -145,8 +145,8 @@ Slots:
           (lambda (res)
             (promise-reject `(fail-git-ff ,res))))))
 
-(async-defun dired-git--add-git-annotation (&optional rootonly)
-  "Add git annotation for current-point in dired buffer.
+(async-defun dired-git--add-git-annotation (pos &optional rootonly)
+  "Add git annotation for POS in dired buffer.
 If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   (let (status)
     (when-let* ((path (dired-get-filename nil t))
@@ -154,7 +154,7 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
                  (if rootonly
                      (let ((path (expand-file-name ".git" path)))
                        (when (file-directory-p path)
-                         path))
+                         (file-name-directory path)))
                    (locate-dominating-file path ".git"))))
       (condition-case err
           (if (string-match-p "/\\.\\.?\\'" path)
@@ -166,7 +166,7 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
                             (dired-git--promise-git-modified git-dir)
                             (dired-git--promise-git-ff git-dir)))))
             (warn "%s: %s" git-dir status)
-            (dired-git--add-overlay (point) (format "%s " status)))
+            (dired-git--add-overlay pos (format "%s " status)))
         (error
          (warn err))))))
 
