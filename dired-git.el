@@ -160,7 +160,9 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
         (setq status (await
                       (promise-all
                        (vector
-                        (dired-git--promise-get-branch git-dir)))))
+                        (dired-git--promise-get-branch git-dir)
+                        (dired-git--promise-git-modified git-dir)
+                        (dired-git--promise-git-ff git-dir)))))
         (dired-git--add-overlay (pos) "  ")))))
 
 (defun dired-git--add-status ()
