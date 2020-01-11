@@ -96,36 +96,38 @@ Slots:
 
 ;;; Function
 
-(defun dired-git--promise-get-branch (&optional dir rootonly)
-  "Return promise to get branch name for DIR or `default-directory'.
-If ROOTONLY is non-nil, return nil when DIR doesn't git root directory."
-  (let ((dir* (or dir default-directory)))
-    (when-let ((git-dir
-                (if rootonly
-                    (let ((path (expand-file-name ".git" dir*)))
-                      (when (file-directory-p path)
-                        path))
-                  (expand-file-name
-                   (locate-dominating-file dir* ".git")))))
-        (promise-then
-         (promise:make-process
-          shell-file-name
-          shell-command-switch
-          (format "cd %s; git rev-parse --abbrev-ref HEAD"
-                  (shell-quote-argument git-dir)))
-         (lambda (res)
-           (seq-let (stdin _stderr) res
-             (promise-resolve (string-trim stdin))))
-         (lambda (reason)
-           (promise-reject `(fail-get-branch ,reason)))))))
+(defun dired-git--promise-get-branch (dir)
+  "Return promise to get branch name for DIR."
+  (promise-then
+   (promise:make-process
+    shell-file-name
+    shell-command-switch
+    (format "cd %s; git rev-parse --abbrev-ref HEAD" dir))
+   (lambda (res)
+     (seq-let (stdin _stderr) res
+       (promise-resolve (string-trim stdin))))
+   (lambda (reason)
+     (promise-reject `(fail-get-branch ,reason)))))
 
-(async-defun dired-git--add-git-annotation (point)
-  "Add git annotation for POINT in dired buffer."
+(async-defun dired-git--add-git-annotation (&optional rootonly)
+  "Add git annotation for current-point in dired buffer.
+If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   (let (status)
-    (when-let ((path (dired-get-filename nil t)))
+    (when-let* ((path (dired-get-filename nil t))
+                (git-dir
+                 (if rootonly
+                     (let ((path (expand-file-name ".git" path)))
+                       (when (file-directory-p path)
+                         (shell-quote-argument path)))
+                   (shell-quote-argument
+                    (expand-file-name
+                     (locate-dominating-file path ".git"))))))
       (when (string-match-p "/\\.\\.?\\'" path)
-        (setq status (await dired-git--promise-get-branch path 'rootonly))
-        (dired-git--add-overlay (point) "  ")))))
+        (setq status (await
+                      (promise-all
+                       (vector
+                        (dired-git--promise-get-branch git-dir)))))
+        (dired-git--add-overlay (pos) "  ")))))
 
 (defun dired-git--add-status ()
   "Add git status for `current-buffer'."
