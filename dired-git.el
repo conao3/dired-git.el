@@ -157,7 +157,8 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
                          path))
                    (locate-dominating-file path ".git"))))
       (condition-case err
-          (when (string-match-p "/\\.\\.?\\'" path)
+          (if (string-match-p "/\\.\\.?\\'" path)
+              nil
             (setq status (await
                           (promise-all
                            (vector
@@ -165,7 +166,7 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
                             (dired-git--promise-git-modified git-dir)
                             (dired-git--promise-git-ff git-dir)))))
             (warn "%s: %s" git-dir status)
-            (dired-git--add-overlay (pos) (format "%s " status)))
+            (dired-git--add-overlay (point) (format "%s " status)))
         (error
          (warn err))))))
 
