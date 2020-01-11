@@ -109,6 +109,19 @@ Slots:
    (lambda (reason)
      (promise-reject `(fail-get-branch ,reason)))))
 
+(defun dired-git--promise-has-modified (dir)
+  "Return promise to get work tree modified for DIR."
+  (promise-then
+   (promise:make-process
+    shell-file-name
+    shell-command-switch
+    (format "cd %s; git status --short" dir))
+   (lambda (res)
+     (seq-let (stdin _stderr) res
+       (promise-resolve (not (string-empty-p (string-trim stdin))))))
+   (lambda (reason)
+     (promise-reject `(fail-has-modified ,reason)))))
+
 (async-defun dired-git--add-git-annotation (&optional rootonly)
   "Add git annotation for current-point in dired buffer.
 If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
