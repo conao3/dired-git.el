@@ -183,6 +183,7 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
 ;;;###autoload
 (defun dired-git-setup (&optional buf)
   "Setup dired-git for BUF or `current-buffer'."
+  (interactive)
   (with-current-buffer (or buf (current-buffer))
     (save-restriction
       (widen)
