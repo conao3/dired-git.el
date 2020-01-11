@@ -126,6 +126,25 @@ Slots:
    (lambda (reason)
      (promise-reject `(fail-has-modified ,reason)))))
 
+(defun dired-git--promise-git-ff (dir)
+  "Return promise to be able merge via fast-foward for DIR."
+  (promise-chain (dired-git--promise-git-branch dir)
+    (then (lambda (res)
+            (promise:make-process
+             shell-file-name
+             shell-command-switch
+             (apply #'format
+                    `("cd %s; git rev-list --count %s/%s..%s"
+                      ,@(mapcar #'shell-quote-argument
+                                (list (expand-file-name dir) "origin" res res)))))))
+    (then (lambda (res)
+            (let ((res* (string-to-number (apply #'concat res))))
+              (if (eq res* 0)
+                  (promise-resolve t)
+                (promise-resolve nil))))
+          (lambda (res)
+            (promise-reject `(fail-git-ff ,res))))))
+
 (async-defun dired-git--add-git-annotation (&optional rootonly)
   "Add git annotation for current-point in dired buffer.
 If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
