@@ -134,7 +134,7 @@ Slots:
              shell-file-name
              shell-command-switch
              (apply #'format
-                    `("cd %s; git rev-list --count %s/%s..%s"
+                    `("cd %s; git rev-list --count %s/%s -- %s"
                       ,@(mapcar #'shell-quote-argument
                                 (list (expand-file-name dir) "origin" res res)))))))
     (then (lambda (res)
