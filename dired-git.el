@@ -102,7 +102,8 @@ Slots:
    (promise:make-process
     shell-file-name
     shell-command-switch
-    (format "cd %s; git rev-parse --abbrev-ref HEAD" dir))
+    (format "cd %s; git rev-parse --abbrev-ref HEAD"
+            (shell-quote-argument dir)))
    (lambda (res)
      (seq-let (stdin _stderr) res
        (promise-resolve (string-trim stdin))))
@@ -115,7 +116,8 @@ Slots:
    (promise:make-process
     shell-file-name
     shell-command-switch
-    (format "cd %s; git status --short" dir))
+    (format "cd %s; git status --short"
+            (shell-quote-argument dir)))
    (lambda (res)
      (seq-let (stdin _stderr) res
        (promise-resolve (not (string-empty-p (string-trim stdin))))))
@@ -131,10 +133,9 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
                  (if rootonly
                      (let ((path (expand-file-name ".git" path)))
                        (when (file-directory-p path)
-                         (shell-quote-argument path)))
-                   (shell-quote-argument
-                    (expand-file-name
-                     (locate-dominating-file path ".git"))))))
+                         path))
+                   (expand-file-name
+                    (locate-dominating-file path ".git")))))
       (when (string-match-p "/\\.\\.?\\'" path)
         (setq status (await
                       (promise-all
