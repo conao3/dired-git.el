@@ -60,12 +60,12 @@ Slots:
 `branch'
     Git branch as string
 
-`modified'
+`modify'
     If non-nil, work tree has some changes.
 
-`merge-ff'
+`ff'
     If non-nil, work tree can merge via fast-forward."
-  path branch modified merge-ff)
+  path branch modifiy ff)
 
 
 ;;; Manage Overlays
@@ -96,7 +96,7 @@ Slots:
 
 ;;; Function
 
-(defun dired-git--promise-get-branch (dir)
+(defun dired-git--promise-git-branch (dir)
   "Return promise to get branch name for DIR."
   (promise-then
    (promise:make-process
@@ -111,7 +111,7 @@ Slots:
    (lambda (reason)
      (promise-reject `(fail-get-branch ,reason)))))
 
-(defun dired-git--promise-has-modified (dir)
+(defun dired-git--promise-git-modified (dir)
   "Return promise to get work tree modified for DIR."
   (promise-then
    (promise:make-process
