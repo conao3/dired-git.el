@@ -102,8 +102,11 @@ If ROOTONLY is non-nil, return nil when DIR doesn't git root directory."
   (let ((dir* (or dir default-directory)))
     (when-let ((git-dir
                 (if rootonly
-                    (file-directory-p (expand-file-name ".git" dir*))
-                  (locate-dominating-file dir* ".git"))))
+                    (let ((path (expand-file-name ".git" dir*)))
+                      (when (file-directory-p path)
+                        path))
+                  (expand-file-name
+                   (locate-dominating-file dir* ".git")))))
         (promise-then
          (promise:make-process
           shell-file-name
