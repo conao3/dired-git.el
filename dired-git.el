@@ -134,7 +134,7 @@ STDOUT is return value form `dired-git--promise-git-info'."
              (when-let ((width (string-width (plist-get elm key))))
                (when (< (or (alist-get key width-alist) 0) width)
                  (setf (alist-get key width-alist) width)))))
-         (puthash "**dired-git--width**" width-alist table)
+         (puthash "**dired-git/width**" width-alist table)
          (prin1-to-string table))))
    (lambda (res)
      (promise-resolve (read res)))
@@ -148,21 +148,26 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
    (lambda (resolve reject)
      (condition-case err
          (with-current-buffer buf
-           (save-excursion
-             (goto-char (point-min))
-             (while (not (eobp))
-               (when-let* ((file (dired-get-filename nil 'noerror))
-                           (data (gethash file table)))
-                 (dired-git--add-overlay
-                  (point)
-                  (format "%s-%s-%s "
-                          (alist-get :branch data)
-                          (alist-get :remote data)
-                          (alist-get :ff data))))
-               (dired-next-line 1))
-             (promise-resolve t)))
+           (when-let* ((width (gethash "**dired-git/width**" table))
+                       (w-branch (alist-get :branch width))
+                       (w-remote (alist-get :remote width))
+                       (w-ff     (alist-get :ff width)))
+             (save-excursion
+               (goto-char (point-min))
+               (while (not (eobp))
+                 (when-let* ((file (dired-get-filename nil 'noerror))
+                             (data (gethash file table)))
+                   (dired-git--add-overlay
+                    (point)
+                    (format (format "%%%ds %%%ds %%%ds "
+                                    w-branch w-remote w-ff)
+                            (alist-get :branch data)
+                            (alist-get :remote data)
+                            (alist-get :ff data))))
+                 (dired-next-line 1))
+               (funcall resolve t))))
        (error
-        (promise-reject `(fail-add-annotation ,buf ,table ,err)))))))
+        (funcall reject `(fail-add-annotation ,buf ,table ,err)))))))
 
 
 ;;; Main
