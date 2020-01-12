@@ -225,6 +225,12 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   buffer: %s\n  rootonly: %s\n"
               (prin1-to-string buf) rootonly))))))
 
+;;;###autoload
+(defun dired-git-teardown ()
+  "Teardown all overlays added by dired-git."
+  (interactive)
+  (dired-git--remove-all-overlays))
+
 (provide 'dired-git)
 
 ;; Local Variables:
