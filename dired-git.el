@@ -108,9 +108,24 @@ gitinfo\"
 "))
    (lambda (res)
      (seq-let (stdout stderr) res
-       (if (not (string-empty-p stderr))
-           (promise-reject `(fail-git-info-invalid-output ,stdout ,stderr))
-         (promise-resolve stdout))))
+       (let ((dir* (expand-file-name dir)))
+         (if (not (string-empty-p stderr))
+             (promise-reject `(fail-git-info-invalid-output ,stdout ,stderr))
+           (setq stdout
+                 (concat
+                  "\n"
+                  (prin1-to-string (list :file (concat dir* "/.")
+                                         :branch "<branch>"
+                                         :remote "<remote>"
+                                         :ff "<fast-forward>"))
+                  "\n"
+                  (prin1-to-string (list :file (concat dir* "/..")
+                                         :branch ""
+                                         :remote ""
+                                         :ff ""))
+                  "\n"
+                  stdout))
+           (promise-resolve stdout)))))
    (lambda (reason)
      (promise-reject `(fail-git-info-command ,reason)))))
 
@@ -152,20 +167,23 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                        (w-branch (alist-get :branch width))
                        (w-remote (alist-get :remote width))
                        (w-ff     (alist-get :ff width)))
-             (save-excursion
-               (goto-char (point-min))
-               (while (not (eobp))
-                 (when-let* ((file (dired-get-filename nil 'noerror))
+             (save-restriction
+               (widen)
+               (save-excursion
+                 (goto-char (point-min))
+                 (while (not (eobp))
+                   (if-let* ((file (dired-get-filename nil 'noerror))
                              (data (gethash file table)))
-                   (dired-git--add-overlay
-                    (point)
-                    (format (format "%%%ds %%%ds %%%ds "
-                                    w-branch w-remote w-ff)
-                            (alist-get :branch data)
-                            (alist-get :remote data)
-                            (alist-get :ff data))))
-                 (dired-next-line 1))
-               (funcall resolve t))))
+                       (dired-git--add-overlay
+                        (point)
+                        (format (format "%%%ds %%%ds %%%ds "
+                                        w-branch w-remote w-ff)
+                                (alist-get :branch data)
+                                (alist-get :remote data)
+                                (alist-get :ff data)))
+                     (warn "%s" (dired-get-filename nil 'noerror)))
+                   (dired-next-line 1))
+                 (funcall resolve t)))))
        (error
         (funcall reject `(fail-add-annotation ,buf ,table ,err)))))))
 
