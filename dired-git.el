@@ -126,36 +126,43 @@ STDOUT is return value form `dired-git--promise-git-info'."
              width-alist)
          (dolist (elm info)
            (puthash (plist-get elm :file)
-                    `((branch . ,(plist-get elm :branch))
-                      (remote . ,(plist-get elm :remote))
-                      (ff . ,(plist-get elm :ff)))
+                    `((:branch . ,(plist-get elm :branch))
+                      (:remote . ,(plist-get elm :remote))
+                      (:ff . ,(plist-get elm :ff)))
                     table)
            (dolist (key '(:branch :remote :ff))
              (when-let ((width (string-width (plist-get elm key))))
                (when (< (or (alist-get key width-alist) 0) width)
                  (setf (alist-get key width-alist) width)))))
          (puthash "**dired-git--width**" width-alist table)
-         table)))
+         (prin1-to-string table))))
    (lambda (res)
-     (promise-resolve res))
+     (promise-resolve (read res)))
    (lambda (reason)
      (promise-reject `(fail-create-hash-table ,stdout ,reason)))))
 
 (defun dired-git--promise-add-annotation (buf table)
   "Add git annotation for BUF.
 TABLE is hash table returned value by `dired-git--promise-git-info'."
-  (with-current-buffer buf
-    (save-excursion
-      (goto-char (point-min))
-      (while (not (eobp))
-        (when-let ((data (gethash (dired-get-filename nil 'noerror) table)))
-          (dired-git--add-overlay
-           (point)
-           (format "%s-%s-%s "
-                   (plist-get data :branch)
-                   (plist-get data :remote)
-                   (plist-get data :ff))))
-        (dired-next-line 1)))))
+  (promise-new
+   (lambda (resolve reject)
+     (condition-case err
+         (with-current-buffer buf
+           (save-excursion
+             (goto-char (point-min))
+             (while (not (eobp))
+               (when-let* ((file (dired-get-filename nil 'noerror))
+                           (data (gethash file table)))
+                 (dired-git--add-overlay
+                  (point)
+                  (format "%s-%s-%s "
+                          (alist-get :branch data)
+                          (alist-get :remote data)
+                          (alist-get :ff data))))
+               (dired-next-line 1))
+             (promise-resolve t)))
+       (error
+        (promise-reject `(fail-add-annotation ,buf ,table ,err)))))))
 
 (async-defun dired-git--add-status (&optional buf rootonly)
   "Add git status for BUF or `current-buffer'.
@@ -180,6 +187,10 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
         (warn "Fail create hash table
   buffer: %s\n  rootonly: %s\n  stdout: %s\n  reason: %s"
               (prin1-to-string buf) rootonly stdout reason))
+       (`(error (fail-add-annotation ,buf ,table ,reason))
+        (warn "Fail add annotation
+  buffer: %s\n  table: %s\n  reason: %s"
+              (prin1-to-string buf) table  reason))
        (_
         (warn "Fail dired-git--promise-add-annotation
   buffer: %s\n  rootonly: %s\n"
