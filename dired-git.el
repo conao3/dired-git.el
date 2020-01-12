@@ -114,12 +114,12 @@ gitinfo\"
            (setq stdout
                  (concat
                   "\n"
-                  (prin1-to-string (list :file (concat dir* "/.")
+                  (prin1-to-string (list :file (concat dir* ".")
                                          :branch "<branch>"
                                          :remote "<remote>"
                                          :ff "<fast-forward>"))
                   "\n"
-                  (prin1-to-string (list :file (concat dir* "/..")
+                  (prin1-to-string (list :file (concat dir* "..")
                                          :branch ""
                                          :remote ""
                                          :ff ""))
