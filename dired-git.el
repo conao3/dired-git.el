@@ -164,9 +164,14 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
        (error
         (promise-reject `(fail-add-annotation ,buf ,table ,err)))))))
 
-(async-defun dired-git--add-status (&optional buf rootonly)
+
+;;; Main
+
+;;;###autoload
+(async-defun dired-git-setup (&optional buf rootonly)
   "Add git status for BUF or `current-buffer'.
 If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
+  (interactive)
   (condition-case err
       (let* ((buf* (or buf (current-buffer)))
              (res (await (dired-git--promise-git-info
@@ -196,16 +201,6 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
         (warn "Fail dired-git--promise-add-annotation
   buffer: %s\n  rootonly: %s\n"
               (prin1-to-string buf) rootonly))))))
-
-
-;;; Main
-
-;;;###autoload
-(defun dired-git-setup (&optional buf)
-  "Setup dired-git for BUF or `current-buffer'."
-  (interactive)
-  (let ((buf* (or buf (current-buffer))))
-    (dired-git--add-status buf*)))
 
 (provide 'dired-git)
 
