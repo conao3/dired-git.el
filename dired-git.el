@@ -47,26 +47,6 @@
   '((t (:foreground "cyan" :weight bold)))
   "Face of showing branch else.")
 
-(cl-defstruct (dired-git-status
-               (:constructor nil)
-               (:constructor dired-git-status-new)
-               (:copier nil))
-  "Structure reporesenting an git status object.
-Slots:
-
-`path'
-    Path of directory or file as string.
-
-`branch'
-    Git branch as string
-
-`modify'
-    If non-nil, work tree has some changes.
-
-`ff'
-    If non-nil, work tree can merge via fast-forward."
-  path branch modifiy ff)
-
 
 ;;; Manage Overlays
 
