@@ -131,28 +131,38 @@ gitinfo\"
        (if (not (string-empty-p stderr))
            (promise-reject `(fail-git-info-invalid-output ,stdin ,stderr))
          (condition-case err
-             (let ((info (read (format "(%s)" stdin))))
-               (promise-resolve info))
+             (let ((info (read (format "(%s)" stdin)))
+                   (table (make-hash-table :test 'equal)))
+               (dolist (elm info)
+                 (puthash (plist-get elm :file)
+                          (list :branch (plist-get elm :branch)
+                                :remote (plist-get elm :remote)
+                                :ff (plist-get elm :ff))
+                          table))
+               (promise-resolve table))
            (error
             (promise-reject `(fail-git-info-read ,stdin ,err)))))))
    (lambda (reason)
      (promise-reject `(fail-git-info-command ,reason)))))
 
-(defun dired-git--promise-add-annotation (buf info)
+(defun dired-git--promise-add-annotation (buf table)
   "Add git annotation for BUF.
-INFO is return value by `dired-git--promise-git-info'.")
+TABLE is hash table returned value by `dired-git--promise-git-info'."
+  (with-current-buffer buf
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (dired-git--add-overlay)
+        (dired-next-line 1)))))
 
 (async-defun dired-git--add-status (&optional buf rootonly)
   "Add git status for BUF or `current-buffer'.
 If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   (condition-case err
-      (with-current-buffer (or buf (current-buffer))
-        (let ((res (await (dired-git--promise-git-info dired-directory))))
-          (save-excursion
-            (goto-char (point-min))
-            (while (not (eobp))
-              (dired-git--add-overlay)
-              (dired-next-line 1)))))
+      (let* ((buf* (or buf (current-buffer)))
+             (res (await (dired-git--promise-git-info
+                          (with-current-buffer buf* dired-directory))))
+             (res (await (dired-git--promise-add-annotation buf* res)))))
     (error
      (pcase err
        (`(error (fail-git-command ,reason))
