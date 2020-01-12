@@ -96,54 +96,41 @@ Slots:
 
 ;;; Function
 
-(defun dired-git--promise-git-branch (dir)
+(defun dired-git--promise-git-info (dir)
   "Return promise to get branch name for DIR."
   (promise-then
-   (promise:make-process
-    shell-file-name
-    shell-command-switch
-    (format "cd %s; git rev-parse --abbrev-ref HEAD"
-            (shell-quote-argument
-             (expand-file-name dir))))
+   (let ((default-directory dir))
+     (promise:make-process
+      shell-file-name
+      shell-command-switch
+      "find . -mindepth 1 -maxdepth 1 -type d | sort | tr \\\\n \\\\0 | \
+xargs -0 -I^ sh -c \"
+cd ^
+function gitinfo() {
+if [ \\$PWD != \\$(git rev-parse --show-toplevel) ]; then exit 1; fi
+branch=\\$(git symbolic-ref --short HEAD)
+remote=\\$(git config --get branch.\\${branch}.remote)
+ff=\\$(git rev-parse \\${remote}/\\${branch} >/dev/null 2>&1;
+  if [ 0 -ne \\$? ]; then
+    echo missing
+  else
+    if [ 0 -eq \\$(git rev-list --count \\${remote}/\\${branch}..\\${branch}) ]; then echo true; else echo false; fi
+  fi
+)
+echo \\\"(\
+ :file \\\\\\\"\\$PWD\\\\\\\"\
+ :branch \\\\\\\"\\${branch}\\\\\\\"\
+ :remote \\\\\\\"\\${remote}\\\\\\\"\
+ :ff \\\\\\\"\\${ff}\\\\\\\"\
+)\\\"
+}
+gitinfo\"
+"))
    (lambda (res)
      (seq-let (stdin _stderr) res
        (promise-resolve (string-trim stdin))))
    (lambda (reason)
-     (promise-reject `(fail-get-branch ,reason)))))
-
-(defun dired-git--promise-git-modified (dir)
-  "Return promise to get work tree modified for DIR."
-  (promise-then
-   (promise:make-process
-    shell-file-name
-    shell-command-switch
-    (format "cd %s; git status --short"
-            (shell-quote-argument
-             (expand-file-name dir))))
-   (lambda (res)
-     (seq-let (stdin _stderr) res
-       (promise-resolve (not (string-empty-p (string-trim stdin))))))
-   (lambda (reason)
-     (promise-reject `(fail-has-modified ,reason)))))
-
-(defun dired-git--promise-git-ff (dir)
-  "Return promise to be able merge via fast-foward for DIR."
-  (promise-chain (dired-git--promise-git-branch dir)
-    (then (lambda (res)
-            (promise:make-process
-             shell-file-name
-             shell-command-switch
-             (apply #'format
-                    `("cd %s; git rev-list --count %s/%s -- %s"
-                      ,@(mapcar #'shell-quote-argument
-                                (list (expand-file-name dir) "origin" res res)))))))
-    (then (lambda (res)
-            (let ((res* (string-to-number (apply #'concat res))))
-              (if (eq res* 0)
-                  (promise-resolve t)
-                (promise-resolve nil))))
-          (lambda (res)
-            (promise-reject `(fail-git-ff ,res))))))
+     (promise-reject `(fail-git-info ,reason)))))
 
 (async-defun dired-git--add-git-annotation (pos &optional rootonly)
   "Add git annotation for POS in dired buffer.
@@ -160,11 +147,7 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
           (if (string-match-p "/\\.\\.?\\'" path)
               nil
             (setq status (await
-                          (promise-all
-                           (vector
-                            (dired-git--promise-get-branch git-dir)
-                            (dired-git--promise-git-modified git-dir)
-                            (dired-git--promise-git-ff git-dir)))))
+                          (dired-git--promise-git-info git-dir)))
             (dired-git--add-overlay pos (format "%s " status)))
         (error
          (warn err))))))
