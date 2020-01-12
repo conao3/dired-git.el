@@ -132,33 +132,28 @@ gitinfo\"
    (lambda (reason)
      (promise-reject `(fail-git-info ,reason)))))
 
-(async-defun dired-git--add-git-annotation (pos &optional rootonly)
-  "Add git annotation for POS in dired buffer.
-If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
-  (let (status)
-    (when-let* ((path (dired-get-filename nil t))
-                (git-dir
-                 (if rootonly
-                     (let ((path (expand-file-name ".git" path)))
-                       (when (file-directory-p path)
-                         (file-name-directory path)))
-                   (locate-dominating-file path ".git"))))
-      (condition-case err
-          (if (string-match-p "/\\.\\.?\\'" path)
-              nil
-            (setq status (await
-                          (dired-git--promise-git-info git-dir)))
-            (dired-git--add-overlay pos (format "%s " status)))
-        (error
-         (warn err))))))
+(defun dired-git--promise-add-annotation (buf info)
+  "Add git annotation for BUF.
+INFO is return value by `dired-git--promise-git-info'.")
 
-(defun dired-git--add-status ()
-  "Add git status for `current-buffer'."
-  (save-excursion
-    (goto-char (point-min))
-    (while (not (eobp))
-      (dired-git--add-git-annotation 'rootonly)
-      (dired-next-line 1))))
+(async-defun dired-git--add-status (&optional buf rootonly)
+  "Add git status for BUF or `current-buffer'.
+If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
+  (condition-case err
+      (with-current-buffer (or buf (current-buffer))
+        (let ((res (await (dired-git--promise-git-info dired-directory))))
+          (save-excursion
+            (goto-char (point-min))
+            (while (not (eobp))
+              (dired-git--add-overlay)
+              (dired-next-line 1)))))
+    (error
+     (pcase err
+       (`(error (fail-git-info ,reason))
+        (warn "Fail get git info
+  buffer: %s\n  rootonly: %s"
+              (prin1-to-string buf)
+              rootonly))))))
 
 
 ;;; Main
@@ -167,10 +162,8 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
 (defun dired-git-setup (&optional buf)
   "Setup dired-git for BUF or `current-buffer'."
   (interactive)
-  (with-current-buffer (or buf (current-buffer))
-    (save-restriction
-      (widen)
-      (dired-git--add-status))))
+  (let ((buf* (or buf (current-buffer))))
+    (dired-git--add-status buf*)))
 
 (provide 'dired-git)
 
