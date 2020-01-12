@@ -172,6 +172,7 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
              (res (await (dired-git--promise-git-info
                           (with-current-buffer buf* dired-directory))))
              (res (await (dired-git--promise-create-hash-table res)))
+             (_   (dired-git--remove-all-overlays))
              (res (await (dired-git--promise-add-annotation buf* res)))))
     (error
      (pcase err
