@@ -127,10 +127,16 @@ echo \\\"(\
 gitinfo\"
 "))
    (lambda (res)
-     (seq-let (stdin _stderr) res
-       (promise-resolve (string-trim stdin))))
+     (seq-let (stdin stderr) res
+       (if (not (string-empty-p stderr))
+           (promise-reject `(fail-git-info-invalid-output ,stdin ,stderr))
+         (condition-case err
+             (let ((info (read (format "(%s)" stdin))))
+               (promise-resolve info))
+           (error
+            (promise-reject `(fail-git-info-read ,stdin ,err)))))))
    (lambda (reason)
-     (promise-reject `(fail-git-info ,reason)))))
+     (promise-reject `(fail-git-info-command ,reason)))))
 
 (defun dired-git--promise-add-annotation (buf info)
   "Add git annotation for BUF.
@@ -149,11 +155,22 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
               (dired-next-line 1)))))
     (error
      (pcase err
-       (`(error (fail-git-info ,reason))
-        (warn "Fail get git info
-  buffer: %s\n  rootonly: %s"
-              (prin1-to-string buf)
-              rootonly))))))
+       (`(error (fail-git-command ,reason))
+        (warn "Fail invoke git command
+  buffer: %s\n  rootonly: %s\n  reason:%s"
+              (prin1-to-string buf) rootonly reason))
+       (`(error (fail-git-info-read ,stdin ,orig-err))
+        (warn "Fail read git output
+  buffer: %s\n  rootonly: %s\n  stdin: %s\n  orig-err: %s"
+              (prin1-to-string buf) rootonly stdin orig-err))
+       (`(error (fail-git-info-invalid-output ,stdin ,stderr))
+        (warn "Fail invoke git command.  Include stderr output
+  buffer: %s\n  rootonly: %s\n  stdin: %s\n  stderr: %s"
+              (prin1-to-string buf) rootonly stdin stderr))
+       (_
+        (warn "Fail dired-git--promise-add-annotation
+  buffer: %s\n  rootonly: %s\n"
+              (prin1-to-string buf) rootonly))))))
 
 
 ;;; Main
