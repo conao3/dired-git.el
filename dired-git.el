@@ -40,7 +40,7 @@
   :link '(url-link :tag "Github" "https://github.com/conao3/dired-git.el"))
 
 (defface dired-git-branch-master
-  '((t (:foreground "green" :weight bold)))
+  '((t (:foreground "SpringGreen" :weight bold)))
   "Face of showing branch master.")
 
 (defface dired-git-branch-else
@@ -174,13 +174,19 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                  (while (not (eobp))
                    (when-let* ((file (dired-get-filename nil 'noerror))
                                (data (gethash file table)))
-                     (dired-git--add-overlay
-                      (point)
-                      (format (format "%%%ds %%%ds %%%ds "
-                                      w-branch w-remote w-ff)
-                              (alist-get :branch data)
-                              (alist-get :remote data)
-                              (alist-get :ff data))))
+                     (let ((branch (alist-get :branch data))
+                           (remote (alist-get :remote data))
+                           (ff     (alist-get :ff data)))
+                       (dired-git--add-overlay
+                        (point)
+                        (format (format "%%%ds %%%ds %%%ds "
+                                        w-branch w-remote w-ff)
+                                (propertize branch 'face
+                                            (if (string= "master" branch)
+                                                'dired-git-branch-master
+                                              'dired-git-branch-else))
+                                (alist-get :remote data)
+                                (alist-get :ff data)))))
                    (dired-next-line 1))
                  (funcall resolve t)))))
        (error
