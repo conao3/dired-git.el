@@ -172,16 +172,15 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                (save-excursion
                  (goto-char (point-min))
                  (while (not (eobp))
-                   (if-let* ((file (dired-get-filename nil 'noerror))
-                             (data (gethash file table)))
-                       (dired-git--add-overlay
-                        (point)
-                        (format (format "%%%ds %%%ds %%%ds "
-                                        w-branch w-remote w-ff)
-                                (alist-get :branch data)
-                                (alist-get :remote data)
-                                (alist-get :ff data)))
-                     (warn "%s" (dired-get-filename nil 'noerror)))
+                   (when-let* ((file (dired-get-filename nil 'noerror))
+                               (data (gethash file table)))
+                     (dired-git--add-overlay
+                      (point)
+                      (format (format "%%%ds %%%ds %%%ds "
+                                      w-branch w-remote w-ff)
+                              (alist-get :branch data)
+                              (alist-get :remote data)
+                              (alist-get :ff data))))
                    (dired-next-line 1))
                  (funcall resolve t)))))
        (error
