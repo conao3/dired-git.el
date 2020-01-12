@@ -139,7 +139,7 @@ STDOUT is return value form `dired-git--promise-git-info'."
    (lambda (res)
      (promise-resolve res))
    (lambda (reason)
-     (promise-reject `(fail-create-hash-table ,reason)))))
+     (promise-reject `(fail-create-hash-table ,stdout ,reason)))))
 
 (defun dired-git--promise-add-annotation (buf table)
   "Add git annotation for BUF.
@@ -172,14 +172,14 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
         (warn "Fail invoke git command
   buffer: %s\n  rootonly: %s\n  reason:%s"
               (prin1-to-string buf) rootonly reason))
-       (`(error (fail-git-info-read ,stdin ,orig-err))
-        (warn "Fail read git output
-  buffer: %s\n  rootonly: %s\n  stdin: %s\n  orig-err: %s"
-              (prin1-to-string buf) rootonly stdin orig-err))
-       (`(error (fail-git-info-invalid-output ,stdin ,stderr))
+       (`(error (fail-git-info-invalid-output ,stdout ,stderr))
         (warn "Fail invoke git command.  Include stderr output
-  buffer: %s\n  rootonly: %s\n  stdin: %s\n  stderr: %s"
-              (prin1-to-string buf) rootonly stdin stderr))
+  buffer: %s\n  rootonly: %s\n  stdout: %s\n  stderr: %s"
+              (prin1-to-string buf) rootonly stdout stderr))
+       (`(error (fail-create-hash-table ,stdout ,reason))
+        (warn "Fail create hash table
+  buffer: %s\n  rootonly: %s\n  stdout: %s\n  reason: %s"
+              (prin1-to-string buf) rootonly stdout reason))
        (_
         (warn "Fail dired-git--promise-add-annotation
   buffer: %s\n  rootonly: %s\n"
