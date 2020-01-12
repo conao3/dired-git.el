@@ -152,7 +152,13 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
     (save-excursion
       (goto-char (point-min))
       (while (not (eobp))
-        (dired-git--add-overlay)
+        (when-let ((data (gethash (dired-get-filename nil 'noerror) table)))
+          (dired-git--add-overlay
+           (point)
+           (format "%s-%s-%s "
+                   (plist-get data :branch)
+                   (plist-get data :remote)
+                   (plist-get data :ff))))
         (dired-next-line 1)))))
 
 (async-defun dired-git--add-status (&optional buf rootonly)
