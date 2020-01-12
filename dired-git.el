@@ -5,7 +5,7 @@
 ;; Author: Naoya Yamashita <conao3@gmail.com>
 ;; Version: 0.0.1
 ;; Keywords: tools
-;; Package-Requires: ((emacs "26.1") (async-await "1.0"))
+;; Package-Requires: ((emacs "26.1") (async-await "1.0") (async "1.9.4"))
 ;; URL: https://github.com/conao3/dired-git.el
 
 ;; This program is free software: you can redistribute it and/or modify
@@ -107,23 +107,39 @@ echo \\\"(\
 gitinfo\"
 "))
    (lambda (res)
-     (seq-let (stdin stderr) res
+     (seq-let (stdout stderr) res
        (if (not (string-empty-p stderr))
-           (promise-reject `(fail-git-info-invalid-output ,stdin ,stderr))
-         (condition-case err
-             (let ((info (read (format "(%s)" stdin)))
-                   (table (make-hash-table :test 'equal)))
-               (dolist (elm info)
-                 (puthash (plist-get elm :file)
-                          (list :branch (plist-get elm :branch)
-                                :remote (plist-get elm :remote)
-                                :ff (plist-get elm :ff))
-                          table))
-               (promise-resolve table))
-           (error
-            (promise-reject `(fail-git-info-read ,stdin ,err)))))))
+           (promise-reject `(fail-git-info-invalid-output ,stdout ,stderr))
+         (promise-resolve stdout))))
    (lambda (reason)
      (promise-reject `(fail-git-info-command ,reason)))))
+
+(defun dired-git--promise-create-hash-table (stdout)
+  "Return promise to create hash table from STDOUT.
+STDOUT is return value form `dired-git--promise-git-info'."
+  (promise-then
+   (promise:async-start
+    `(lambda ()
+       (require 'subr-x)
+       (let ((info (read (format "(%s)" ,stdout)))
+             (table (make-hash-table :test 'equal))
+             width-alist)
+         (dolist (elm info)
+           (puthash (plist-get elm :file)
+                    `((branch . ,(plist-get elm :branch))
+                      (remote . ,(plist-get elm :remote))
+                      (ff . ,(plist-get elm :ff)))
+                    table)
+           (dolist (key '(:branch :remote :ff))
+             (when-let ((width (string-width (plist-get elm key))))
+               (when (< (or (alist-get key width-alist) 0) width)
+                 (setf (alist-get key width-alist) width)))))
+         (puthash "**dired-git--width**" width-alist table)
+         table)))
+   (lambda (res)
+     (promise-resolve res))
+   (lambda (reason)
+     (promise-reject `(fail-create-hash-table ,reason)))))
 
 (defun dired-git--promise-add-annotation (buf table)
   "Add git annotation for BUF.
@@ -148,6 +164,7 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
       (let* ((buf* (or buf (current-buffer)))
              (res (await (dired-git--promise-git-info
                           (with-current-buffer buf* dired-directory))))
+             (res (await (dired-git--promise-create-hash-table res)))
              (res (await (dired-git--promise-add-annotation buf* res)))))
     (error
      (pcase err
