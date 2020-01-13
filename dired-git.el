@@ -204,7 +204,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 
 ;;; Main
 
-(async-defun dired-git--setup (&optional buf rootonly)
+(async-defun dired-git--update (&optional buf rootonly)
   "Add git status for BUF or `current-buffer'.
 If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   (interactive)
@@ -240,9 +240,15 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   buffer: %s\n  rootonly: %s\n"
               (prin1-to-string buf) rootonly))))))
 
+(defun dired-git--setup ()
+  "Setup dired-git minor-mode."
+  (setq dired-git-hashtable nil)
+  (dired-git--update (current-buffer)))
+
 (defun dired-git--teardown ()
   "Teardown all overlays added by dired-git."
   (interactive)
+  (setq dired-git-hashtable nil)
   (dired-git--remove-all-overlays))
 
 ;;;###autoload
