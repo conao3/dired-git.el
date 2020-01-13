@@ -76,6 +76,10 @@
 
 ;;; Function
 
+(defvar-local dired-git-hashtable nil
+  "Hashtable stored git information.
+Key is file absolute path, value is alist of information.")
+
 (defun dired-git--promise-git-info (dir)
   "Return promise to get branch name for DIR."
   (promise-then
@@ -205,7 +209,9 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
              (res (await (dired-git--promise-git-info
                           (with-current-buffer buf* dired-directory))))
              (res (await (dired-git--promise-create-hash-table res)))
-             (_   (dired-git--remove-all-overlays))
+             (_   (with-current-buffer buf*
+                    (setq dired-git-hashtable res)
+                    (dired-git--remove-all-overlays)))
              (res (await (dired-git--promise-add-annotation buf* res)))))
     (error
      (pcase err
