@@ -39,6 +39,11 @@
   :group 'tools
   :link '(url-link :tag "Github" "https://github.com/conao3/dired-git.el"))
 
+(defvar dired-git-mode-map
+  (let ((map (make-sparse-keymap)))
+    map)
+  "Keymap of interactive commands.")
+
 (defface dired-git-branch-master
   '((t (:foreground "SpringGreen" :weight bold)))
   "Face of showing branch master.")
@@ -199,8 +204,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 
 ;;; Main
 
-;;;###autoload
-(async-defun dired-git-setup (&optional buf rootonly)
+(async-defun dired-git--setup (&optional buf rootonly)
   "Add git status for BUF or `current-buffer'.
 If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   (interactive)
@@ -236,11 +240,20 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
   buffer: %s\n  rootonly: %s\n"
               (prin1-to-string buf) rootonly))))))
 
-;;;###autoload
-(defun dired-git-teardown ()
+(defun dired-git--teardown ()
   "Teardown all overlays added by dired-git."
   (interactive)
   (dired-git--remove-all-overlays))
+
+;;;###autoload
+(define-minor-mode dired-git-mode
+  "Minor mode to add git information for dired."
+  :keymap dired-git-mode-map
+  :lighter " Dired-git"
+  :group 'dired-git
+  (if dired-git-mode
+      (dired-git--setup)
+    (dired-git--teardown)))
 
 (provide 'dired-git)
 
