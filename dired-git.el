@@ -117,24 +117,9 @@ gitinfo\"
 "))
    (lambda (res)
      (seq-let (stdout stderr) res
-       (let ((dir* (expand-file-name dir)))
-         (if (not (string-empty-p stderr))
-             (promise-reject `(fail-git-info-invalid-output ,stdout ,stderr))
-           (setq stdout
-                 (concat
-                  "\n"
-                  (prin1-to-string (list :file (concat dir* ".")
-                                         :branch "<branch>"
-                                         :remote "<remote>"
-                                         :ff "<fast-forward>"))
-                  "\n"
-                  (prin1-to-string (list :file (concat dir* "..")
-                                         :branch ""
-                                         :remote ""
-                                         :ff ""))
-                  "\n"
-                  stdout))
-           (promise-resolve stdout)))))
+       (if (not (string-empty-p stderr))
+           (promise-reject `(fail-git-info-invalid-output ,stdout ,stderr))
+         (promise-resolve stdout))))
    (lambda (reason)
      (promise-reject `(fail-git-info-command ,reason)))))
 
