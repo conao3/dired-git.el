@@ -204,9 +204,8 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 
 ;;; Main
 
-(async-defun dired-git--update (&optional buf rootonly)
-  "Add git status for BUF or `current-buffer'.
-If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
+(async-defun dired-git--update (&optional buf)
+  "Add git status for BUF or `current-buffer'."
   (interactive)
   (condition-case err
       (let* ((buf* (or buf (current-buffer)))
@@ -221,24 +220,24 @@ If ROOTONLY is non-nil, do nothing when DIR doesn't git root directory."
      (pcase err
        (`(error (fail-git-command ,reason))
         (warn "Fail invoke git command
-  buffer: %s\n  rootonly: %s\n  reason:%s"
-              (prin1-to-string buf) rootonly reason))
+  buffer: %s\n  reason:%s"
+              (prin1-to-string buf) reason))
        (`(error (fail-git-info-invalid-output ,stdout ,stderr))
         (warn "Fail invoke git command.  Include stderr output
-  buffer: %s\n  rootonly: %s\n  stdout: %s\n  stderr: %s"
-              (prin1-to-string buf) rootonly stdout stderr))
+  buffer: %s\n  stdout: %s\n  stderr: %s"
+              (prin1-to-string buf) stdout stderr))
        (`(error (fail-create-hash-table ,stdout ,reason))
         (warn "Fail create hash table
-  buffer: %s\n  rootonly: %s\n  stdout: %s\n  reason: %s"
-              (prin1-to-string buf) rootonly stdout reason))
+  buffer: %s\n  stdout: %s\n  reason: %s"
+              (prin1-to-string buf) stdout reason))
        (`(error (fail-add-annotation ,buf ,table ,reason))
         (warn "Fail add annotation
   buffer: %s\n  table: %s\n  reason: %s"
               (prin1-to-string buf) table  reason))
        (_
         (warn "Fail dired-git--promise-add-annotation
-  buffer: %s\n  rootonly: %s\n"
-              (prin1-to-string buf) rootonly))))))
+  buffer: %s"
+              (prin1-to-string buf)))))))
 
 (defun dired-git--setup ()
   "Setup dired-git minor-mode."
