@@ -166,21 +166,25 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                (save-excursion
                  (goto-char (point-min))
                  (while (not (eobp))
-                   (when-let* ((file (dired-get-filename nil 'noerror))
-                               (data (gethash file table)))
-                     (let ((branch (alist-get :branch data))
-                           (remote (alist-get :remote data))
-                           (ff     (alist-get :ff data)))
+                   (when-let ((file (dired-get-filename nil 'noerror)))
+                     (if-let ((data (gethash file table)))
+                         (let ((branch (alist-get :branch data))
+                               (remote (alist-get :remote data))
+                               (ff     (alist-get :ff data)))
+                           (dired-git--add-overlay
+                            (point)
+                            (format (format "%%%ds %%%ds %%%ds "
+                                            w-branch w-remote w-ff)
+                                    (propertize branch 'face
+                                                (if (string= "master" branch)
+                                                    'dired-git-branch-master
+                                                  'dired-git-branch-else))
+                                    remote ff)))
                        (dired-git--add-overlay
                         (point)
                         (format (format "%%%ds %%%ds %%%ds "
                                         w-branch w-remote w-ff)
-                                (propertize branch 'face
-                                            (if (string= "master" branch)
-                                                'dired-git-branch-master
-                                              'dired-git-branch-else))
-                                (alist-get :remote data)
-                                (alist-get :ff data)))))
+                                "" "" ""))))
                    (dired-next-line 1))
                  (funcall resolve t)))))
        (error
