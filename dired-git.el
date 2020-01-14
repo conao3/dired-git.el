@@ -207,7 +207,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
              (res (await (dired-git--promise-add-annotation buf* res)))))
     (error
      (pcase err
-       (`(error (fail-git-command ,reason))
+       (`(error (fail-git-info-command ,reason))
         (warn "Fail invoke git command
   buffer: %s\n  reason:%s"
               (prin1-to-string buf) reason))
@@ -224,9 +224,9 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
   buffer: %s\n  table: %s\n  reason: %s"
               (prin1-to-string buf) table  reason))
        (_
-        (warn "Fail dired-git--promise-add-annotation
-  buffer: %s"
-              (prin1-to-string buf)))))))
+        (warn "Fail dired-git--update
+  buffer: %s\n  reason: %s"
+              (prin1-to-string buf) err))))))
 
 (defun dired-git--setup ()
   "Setup dired-git minor-mode."
