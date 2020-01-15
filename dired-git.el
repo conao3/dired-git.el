@@ -96,16 +96,16 @@ Key is file absolute path, value is alist of information.")
 xargs -0 -I^ sh -c \"
 cd ^
 function gitinfo() {
-if [ \\$PWD != \\$(git rev-parse --show-toplevel) ]; then exit 1; fi
-branch=\\$(git symbolic-ref --short HEAD)
-remote=\\$(git config --get branch.\\${branch}.remote)
-ff=\\$(git rev-parse \\${remote}/\\${branch} >/dev/null 2>&1;
+if [ \\\"\\$PWD\\\" != \\\"\\$(git rev-parse --show-toplevel)\\\" ]; then exit 0; fi
+branch=\\\"\\$(git symbolic-ref --short HEAD)\\\"
+remote=\\\"\\$(git config --get branch.\\${branch}.remote)\\\"
+ff=\\\"\\$(git rev-parse \\${remote}/\\${branch} >/dev/null 2>&1;
   if [ 0 -ne \\$? ]; then
     echo missing
   else
     if [ 0 -eq \\$(git rev-list --count \\${remote}/\\${branch}..\\${branch}) ]; then echo true; else echo false; fi
   fi
-)
+)\\\"
 echo \\\"(\
  :file \\\\\\\"\\$PWD\\\\\\\"\
  :branch \\\\\\\"\\${branch}\\\\\\\"\
