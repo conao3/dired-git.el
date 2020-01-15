@@ -5,7 +5,7 @@
 ;; Author: Naoya Yamashita <conao3@gmail.com>
 ;; Version: 0.0.1
 ;; Keywords: tools
-;; Package-Requires: ((emacs "26.1") (async-await "1.0") (async "1.9.4"))
+;; Package-Requires: ((emacs "26.1") (async-await "1.0") (async "1.9.4") (all-the-icons "2.2.0"))
 ;; URL: https://github.com/conao3/dired-git.el
 
 ;; This program is free software: you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 (require 'seq)
 (require 'dired)
 (require 'async-await)
+(require 'all-the-icons)
 
 (defgroup dired-git nil
   "Git integration for dired."
@@ -172,7 +173,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
      (condition-case err
          (with-current-buffer buf
            (when-let* ((width (gethash "**dired-git/width**" table))
-                       (w-branch (alist-get :branch width))
+                       (w-branch (+ 2 (alist-get :branch width)))
                        (w-remote (alist-get :remote width))
                        (w-ff     (alist-get :ff width)))
              (save-restriction
@@ -187,8 +188,9 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                                (ff     (alist-get :ff data)))
                            (dired-git--add-overlay
                             (point)
-                            (format (format "%%%ds %%%ds %%%ds "
+                            (format (format "%%s %%-%ds %%%ds %%%ds "
                                             w-branch w-remote w-ff)
+                                    (all-the-icons-octicon "git-branch")
                                     (propertize branch 'face
                                                 (if (string= "master" branch)
                                                     'dired-git-branch-master
