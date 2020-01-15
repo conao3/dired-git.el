@@ -90,10 +90,11 @@
   "Hashtable stored git information.
 Key is file absolute path, value is alist of information.")
 
-(defun dired-git--promise-git-info (dir)
-  "Return promise to get branch name for DIR."
+(defun dired-git--promise-git-info (buf)
+  "Return promise to get branch name for dired BUF."
   (promise-then
-   (let ((default-directory dir))
+   (let ((default-directory (with-current-buffer buf
+                              dired-directory)))
      (promise:make-process
       shell-file-name
       shell-command-switch
@@ -210,8 +211,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
             (setq-local dired-git-hashtable nil)
             (dired-git--remove-all-overlays))
           (let* ((buf* (or buf (current-buffer)))
-                 (dir (with-current-buffer buf* dired-directory))
-                 (res (await (dired-git--promise-git-info dir)))
+                 (res (await (dired-git--promise-git-info buf*)))
                  (res (await (dired-git--promise-create-hash-table buf* res)))
                  (res (await (dired-git--promise-add-annotation buf* res)))))
           (with-current-buffer buf*
