@@ -83,6 +83,9 @@
 
 ;;; Function
 
+(defvar-local dired-git-working nil
+  "If non-nil, now working dired-git process.")
+
 (defvar-local dired-git-hashtable nil
   "Hashtable stored git information.
 Key is file absolute path, value is alist of information.")
@@ -212,12 +215,18 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 (async-defun dired-git--refresh (&optional buf)
   "Refresh git overlays for BUF or `current-buffer'."
   (condition-case err
-      (let* ((buf* (or buf (current-buffer)))
-             (dir (with-current-buffer buf* dired-directory))
-             (res (await (dired-git--promise-remove-overlays buf*)))
-             (res (await (dired-git--promise-git-info dir)))
-             (res (await (dired-git--promise-create-hash-table buf* res)))
-             (res (await (dired-git--promise-add-annotation buf* res)))))
+      (let ((buf* (or buf (current-buffer))))
+        (unless dired-git-working
+          (with-current-buffer buf*
+            (setq-local dired-git-working t))
+          (let* ((buf* (or buf (current-buffer)))
+                 (dir (with-current-buffer buf* dired-directory))
+                 (res (await (dired-git--promise-remove-overlays buf*)))
+                 (res (await (dired-git--promise-git-info dir)))
+                 (res (await (dired-git--promise-create-hash-table buf* res)))
+                 (res (await (dired-git--promise-add-annotation buf* res)))))
+          (with-current-buffer buf*
+            (setq-local dired-git-working nil))))
     (error
      (pcase err
        (`(error (fail-git-info-command ,reason))
@@ -256,7 +265,6 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 
 (defun dired-git--setup ()
   "Setup dired-git minor-mode."
-  (setq-local dired-git-hashtable nil)
   (pcase-dolist (`(,sym . ,fn) dired-git-advice-alist)
     (advice-add sym :around fn))
   (dired-git--refresh (current-buffer)))
@@ -264,6 +272,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 (defun dired-git--teardown ()
   "Teardown all overlays added by dired-git."
   (setq-local dired-git-hashtable nil)
+  (setq-local dired-git-working nil)
   (dired-git--remove-all-overlays))
 
 ;;;###autoload
