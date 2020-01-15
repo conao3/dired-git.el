@@ -136,7 +136,7 @@ STDOUT is return value form `dired-git--promise-git-info'."
            (puthash (plist-get elm :file)
                     `((:branch . ,(plist-get elm :branch))
                       (:remote . ,(plist-get elm :remote))
-                      (:ff . ,(plist-get elm :ff)))
+                      (:ff     . ,(plist-get elm :ff)))
                     table)
            (dolist (key '(:branch :remote :ff))
              (when-let ((width (string-width (plist-get elm key))))
