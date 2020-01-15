@@ -95,7 +95,6 @@ Key is file absolute path, value is alist of information.")
       "find . -mindepth 1 -maxdepth 1 -type d | sort | tr \\\\n \\\\0 | \
 xargs -0 -I^ sh -c \"
 cd ^
-function gitinfo() {
 if [ \\\"\\$PWD\\\" != \\\"\\$(git rev-parse --show-toplevel)\\\" ]; then exit 0; fi
 branch=\\\"\\$(git symbolic-ref --short HEAD)\\\"
 remote=\\\"\\$(git config --get branch.\\${branch}.remote)\\\"
@@ -112,8 +111,7 @@ echo \\\"(\
  :remote \\\\\\\"\\${remote}\\\\\\\"\
  :ff \\\\\\\"\\${ff}\\\\\\\"\
 )\\\"
-}
-gitinfo\"
+\"
 "))
    (lambda (res)
      (seq-let (stdout stderr) res
