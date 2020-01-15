@@ -165,9 +165,9 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
      (condition-case err
          (with-current-buffer buf
            (when-let* ((width (gethash "**dired-git/width**" table))
-                       (w-branch (+ 2 (alist-get :branch width)))
-                       (w-remote (alist-get :remote width))
-                       (w-ff     (alist-get :ff width)))
+                       (w-branch  (alist-get :branch width))
+                       (_w-remote (alist-get :remote width))
+                       (w-ff      2))
              (save-restriction
                (widen)
                (save-excursion
@@ -175,23 +175,29 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                  (while (not (eobp))
                    (when-let ((file (dired-get-filename nil 'noerror)))
                      (if-let ((data (gethash file table)))
-                         (let ((branch (alist-get :branch data))
-                               (remote (alist-get :remote data))
-                               (ff     (alist-get :ff data)))
+                         (let ((branch  (alist-get :branch data))
+                               (_remote (alist-get :remote data))
+                               (ff      (alist-get :ff data)))
                            (dired-git--add-overlay
                             (point)
-                            (format (format "%%s %%-%ds %%%ds %%%ds "
-                                            w-branch w-remote w-ff)
-                                    (all-the-icons-octicon "git-branch")
-                                    (propertize branch 'face
-                                                (if (string= "master" branch)
-                                                    'dired-git-branch-master
-                                                  'dired-git-branch-else))
-                                    remote ff)))
+                            (concat
+                             (format "%s " (all-the-icons-octicon "git-branch"))
+                             (format (format "%%-%ds " w-branch)
+                                     (propertize branch 'face
+                                                 (if (string= "master" branch)
+                                                     'dired-git-branch-master
+                                                   'dired-git-branch-else)))
+                             (format "%s "
+                                     (cond
+                                      ((string= "true" ff)
+                                       (all-the-icons-octicon "rocket"))
+                                      ((string= "false" ff)
+                                       (all-the-icons-octicon "x"))
+                                      ((string= "missing" ff)
+                                       (all-the-icons-octicon "stop" :v-adjust -0.2)))))))
                        (dired-git--add-overlay
                         (point)
-                        (format (format "%%%ds %%%ds %%%ds "
-                                        w-branch w-remote w-ff)
+                        (format (format "%%%ds %%%ds " (+ 2 w-branch) w-ff)
                                 "" "" ""))))
                    (dired-next-line 1))
                  (funcall resolve t)))))
