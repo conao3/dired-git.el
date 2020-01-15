@@ -39,6 +39,7 @@
   :group 'tools
   :link '(url-link :tag "Github" "https://github.com/conao3/dired-git.el"))
 
+(defvar dired-git-mode)
 (defvar dired-git-mode-map
   (let ((map (make-sparse-keymap)))
     map)
@@ -192,9 +193,8 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 
 ;;; Main
 
-(async-defun dired-git--update (&optional buf)
-  "Add git status for BUF or `current-buffer'."
-  (interactive)
+(async-defun dired-git--refresh (&optional buf)
+  "Refresh git overlays for BUF or `current-buffer'."
   (condition-case err
       (let* ((buf* (or buf (current-buffer)))
              (res (await (dired-git--promise-git-info
@@ -223,19 +223,33 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
   buffer: %s\n  table: %s\n  reason: %s"
               (prin1-to-string buf) table  reason))
        (_
-        (warn "Fail dired-git--update
+        (warn "Fail dired-git--refresh
   buffer: %s\n  reason: %s"
               (prin1-to-string buf) err))))))
 
+(defun dired-git--refresh-advice (fn &rest args)
+  "Advice function for FN with ARGS."
+  (apply fn args)
+  (when dired-git-mode
+    (dired-git--refresh)))
+
+(defvar dired-git-advice-alist
+  '((dired-readin . dired-git--refresh-advice)
+    (dired-revert . dired-git--refresh-advice)
+    (dired-internal-do-deletions . dired-git--refresh-advice)
+    (dired-narrow--internal . dired-git--refresh-advice))
+  "Alist defined advice functions.")
+
 (defun dired-git--setup ()
   "Setup dired-git minor-mode."
-  (setq dired-git-hashtable nil)
-  (dired-git--update (current-buffer)))
+  (setq-local dired-git-hashtable nil)
+  (dired-git--update (current-buffer))
+  (pcase-dolist (`(,sym . ,fn) dired-git-advice-alist)
+    (advice-add sym :around fn)))
 
 (defun dired-git--teardown ()
   "Teardown all overlays added by dired-git."
-  (interactive)
-  (setq dired-git-hashtable nil)
+  (setq-local dired-git-hashtable nil)
   (dired-git--remove-all-overlays))
 
 ;;;###autoload
