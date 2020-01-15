@@ -90,18 +90,6 @@
   "Hashtable stored git information.
 Key is file absolute path, value is alist of information.")
 
-(defun dired-git--promise-remove-overlays (buf)
-  "Return promise to remove overlays in BUF."
-  (promise-new
-   (lambda (resolve reject)
-     (condition-case err
-         (with-current-buffer buf
-           (setq-local dired-git-hashtable nil)
-           (dired-git--remove-all-overlays)
-           (funcall resolve t))
-       (error
-        (funcall reject `(fail-remove-overlay ,buf ,err)))))))
-
 (defun dired-git--promise-git-info (dir)
   "Return promise to get branch name for DIR."
   (promise-then
@@ -218,10 +206,11 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
       (let ((buf* (or buf (current-buffer))))
         (unless dired-git-working
           (with-current-buffer buf*
-            (setq-local dired-git-working t))
+            (setq-local dired-git-working t)
+            (setq-local dired-git-hashtable nil)
+            (dired-git--remove-all-overlays))
           (let* ((buf* (or buf (current-buffer)))
                  (dir (with-current-buffer buf* dired-directory))
-                 (res (await (dired-git--promise-remove-overlays buf*)))
                  (res (await (dired-git--promise-git-info dir)))
                  (res (await (dired-git--promise-create-hash-table buf* res)))
                  (res (await (dired-git--promise-add-annotation buf* res)))))
