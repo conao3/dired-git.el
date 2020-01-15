@@ -168,9 +168,9 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
      (condition-case err
          (with-current-buffer buf
            (when-let* ((width (gethash "**dired-git/width**" table))
-                       (w-branch  (alist-get :branch width))
-                       (_w-remote (alist-get :remote width))
-                       (w-ff      2))
+                       (w-branch (alist-get :branch width))
+                       (w-remote (alist-get :remote width))
+                       (w-ff     2))
              (save-restriction
                (widen)
                (save-excursion
