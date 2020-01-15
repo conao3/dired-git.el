@@ -25,10 +25,22 @@
   - [[#special-thanks][Special Thanks]]
 
 * Description
+Display Git repository information in dired.
+
+M-x dired-git-mode
+[[https://raw.githubusercontent.com/conao3/files/master/blob/dired-git.el/dired-git.png]]
+
+M-x dired-git-mode with dired-hide-details-mode
+[[https://raw.githubusercontent.com/conao3/files/master/blob/dired-git.el/dired-git-summary.png]]
 
 * Install
+Install this package via MELPA.
 
 * Usage
+To use this package, simply add this to your init.el
+#+begin_src emacs-lisp
+  (add-hook 'dired-mode-hook 'dired-git-mode)
+#+end_src
 
 * Customize
 
@@ -65,7 +77,7 @@ Below operation flow is recommended.
   git checkout [feature-branch]     # Checkout branch named [feature-branch]
 
   # <edit loop>
-  emacs dired-git.el              # Edit something you want
+  emacs dired-git.el                # Edit something you want
 
   make test                         # Test dired-git via multi version Emacs
   git commit -am "brabra"           # Commit (auto-run test before commit)
