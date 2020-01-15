@@ -112,12 +112,14 @@ remote=\\\"\\$(git config --get branch.\\${branch}.remote)\\\"
 git rev-parse \\${remote}/\\${branch} >/dev/null 2>&1
 if [ 0 -ne \\$? ]; then
   ff=\\\"missing\\\"
+  forward=\\\"missing\\\"
 else
   ff=\\\"\\$(if [ 0 -eq \\$(git rev-list --count \\${remote}/\\${branch}..\\${branch}) ]; then
     echo true
   else
     echo false
   fi)\\\"
+  forward=\\\"\\$(git log \\${remote}/\\${branch}..\\${branch} --oneline | wc -l)\\\"
 fi
 
 echo \\\"(\
@@ -125,6 +127,7 @@ echo \\\"(\
  :branch \\\\\\\"\\${branch}\\\\\\\"\
  :remote \\\\\\\"\\${remote}\\\\\\\"\
  :ff \\\\\\\"\\${ff}\\\\\\\"\
+ :forward \\\\\\\"\\${forward}\\\\\\\"\
 )\\\"
 \"
 "))
@@ -148,11 +151,12 @@ STDOUT is return value form `dired-git--promise-git-info'."
              width-alist)
          (dolist (elm info)
            (puthash (plist-get elm :file)
-                    `((:branch . ,(plist-get elm :branch))
-                      (:remote . ,(plist-get elm :remote))
-                      (:ff     . ,(plist-get elm :ff)))
+                    `((:branch  . ,(plist-get elm :branch))
+                      (:remote  . ,(plist-get elm :remote))
+                      (:ff      . ,(plist-get elm :ff))
+                      (:forward . ,(plist-get elm :forward)))
                     table)
-           (dolist (key '(:branch :remote :ff))
+           (dolist (key '(:branch :remote :ff :forward))
              (when-let ((width (string-width (plist-get elm key))))
                (when (< (or (alist-get key width-alist) 0) width)
                  (setf (alist-get key width-alist) width)))))
@@ -173,9 +177,10 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
      (condition-case err
          (with-current-buffer buf
            (when-let* ((width (gethash "**dired-git/width**" table))
-                       (w-branch (alist-get :branch width))
-                       (w-remote (alist-get :remote width))
-                       (w-ff     2))
+                       (w-branch  (alist-get :branch width))
+                       (w-remote  (alist-get :remote width))
+                       (w-ff      2)
+                       (w-forward 2))
              (save-restriction
                (widen)
                (save-excursion
@@ -185,7 +190,8 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                      (if-let ((data (gethash file table)))
                          (let ((branch  (alist-get :branch data))
                                (_remote (alist-get :remote data))
-                               (ff      (alist-get :ff data)))
+                               (ff      (alist-get :ff data))
+                               (forward (alist-get :forward data)))
                            (dired-git--add-overlay
                             (point)
                             (concat
@@ -202,11 +208,18 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                                       ((string= "false" ff)
                                        (all-the-icons-octicon "x"))
                                       ((string= "missing" ff)
-                                       (all-the-icons-octicon "stop" :v-adjust -0.2)))))))
+                                       (all-the-icons-octicon "stop" :v-adjust -0.2))))
+                             (format "%s "
+                                     (cond
+                                      ((string= "missing" ff)
+                                       (all-the-icons-octicon "stop" :v-adjust -0.2))
+                                      (t
+                                       (all-the-icons-octicon "diff-added"))))
+                             (format "%s " forward))))
                        (dired-git--add-overlay
                         (point)
-                        (format (format "%%%ds %%%ds " (+ 2 w-branch) w-ff)
-                                "" "" ""))))
+                        (format (format "%%%ds %%%ds %%%ds" (+ 2 w-branch) w-ff w-forward)
+                                "" "" "" ""))))
                    (dired-next-line 1))
                  (funcall resolve t)))))
        (error
