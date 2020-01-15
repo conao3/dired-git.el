@@ -86,6 +86,18 @@
   "Hashtable stored git information.
 Key is file absolute path, value is alist of information.")
 
+(defun dired-git--promise-remove-overlays (buf)
+  "Return promise to remove overlays in BUF."
+  (promise-new
+   (lambda (resolve reject)
+     (condition-case err
+         (with-current-buffer buf
+           (setq-local dired-git-hashtable nil)
+           (dired-git--remove-all-overlays)
+           (funcall resolve t))
+       (error
+        (funcall reject `(fail-remove-overlay ,buf ,err)))))))
+
 (defun dired-git--promise-git-info (dir)
   "Return promise to get branch name for DIR."
   (promise-then
@@ -123,8 +135,8 @@ echo \\\"(\
    (lambda (reason)
      (promise-reject `(fail-git-info-command ,reason)))))
 
-(defun dired-git--promise-create-hash-table (stdout)
-  "Return promise to create hash table from STDOUT.
+(defun dired-git--promise-create-hash-table (buf stdout)
+  "Return promise to create hash table from STDOUT in BUF.
 STDOUT is return value form `dired-git--promise-git-info'."
   (promise-then
    (promise:async-start
@@ -146,6 +158,8 @@ STDOUT is return value form `dired-git--promise-git-info'."
          (puthash "**dired-git/width**" width-alist table)
          (prin1-to-string table))))
    (lambda (res)
+     (with-current-buffer buf
+       (setq-local dired-git-hashtable res))
      (promise-resolve (read res)))
    (lambda (reason)
      (promise-reject `(fail-create-hash-table ,stdout ,reason)))))
@@ -197,12 +211,10 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
   "Refresh git overlays for BUF or `current-buffer'."
   (condition-case err
       (let* ((buf* (or buf (current-buffer)))
-             (res (await (dired-git--promise-git-info
-                          (with-current-buffer buf* dired-directory))))
-             (res (await (dired-git--promise-create-hash-table res)))
-             (_   (with-current-buffer buf*
-                    (setq dired-git-hashtable res)
-                    (dired-git--remove-all-overlays)))
+             (dir (with-current-buffer buf* dired-directory))
+             (res (await (dired-git--promise-remove-overlays buf*)))
+             (res (await (dired-git--promise-git-info dir)))
+             (res (await (dired-git--promise-create-hash-table buf* res)))
              (res (await (dired-git--promise-add-annotation buf* res)))))
     (error
      (pcase err
@@ -243,9 +255,9 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 (defun dired-git--setup ()
   "Setup dired-git minor-mode."
   (setq-local dired-git-hashtable nil)
-  (dired-git--update (current-buffer))
   (pcase-dolist (`(,sym . ,fn) dired-git-advice-alist)
-    (advice-add sym :around fn)))
+    (advice-add sym :around fn))
+  (dired-git--refresh (current-buffer)))
 
 (defun dired-git--teardown ()
   "Teardown all overlays added by dired-git."
