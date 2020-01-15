@@ -95,6 +95,7 @@ Key is file absolute path, value is alist of information.")
       "find . -mindepth 1 -maxdepth 1 -type d | sort | tr \\\\n \\\\0 | \
 xargs -0 -I^ sh -c \"
 cd ^
+git rev-parse --is-inside-work-dir >/dev/null 2>&1 || exit 0
 if [ \\\"\\$PWD\\\" != \\\"\\$(git rev-parse --show-toplevel)\\\" ]; then exit 0; fi
 branch=\\\"\\$(git symbolic-ref --short HEAD)\\\"
 remote=\\\"\\$(git config --get branch.\\${branch}.remote)\\\"
