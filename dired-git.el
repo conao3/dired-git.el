@@ -108,13 +108,18 @@ git rev-parse --is-inside-work-dir >/dev/null 2>&1 || exit 0
 if [ \\\"\\$PWD\\\" != \\\"\\$(git rev-parse --show-toplevel)\\\" ]; then exit 0; fi
 branch=\\\"\\$(git symbolic-ref --short HEAD)\\\"
 remote=\\\"\\$(git config --get branch.\\${branch}.remote)\\\"
-ff=\\\"\\$(git rev-parse \\${remote}/\\${branch} >/dev/null 2>&1;
-  if [ 0 -ne \\$? ]; then
-    echo missing
+
+git rev-parse \\${remote}/\\${branch} >/dev/null 2>&1
+if [ 0 -ne \\$? ]; then
+  ff=\\\"missing\\\"
+else
+  ff=\\\"\\$(if [ 0 -eq \\$(git rev-list --count \\${remote}/\\${branch}..\\${branch}) ]; then
+    echo true
   else
-    if [ 0 -eq \\$(git rev-list --count \\${remote}/\\${branch}..\\${branch}) ]; then echo true; else echo false; fi
-  fi
-)\\\"
+    echo false
+  fi)\\\"
+fi
+
 echo \\\"(\
  :file \\\\\\\"\\$PWD\\\\\\\"\
  :branch \\\\\\\"\\${branch}\\\\\\\"\
