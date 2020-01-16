@@ -139,8 +139,8 @@ echo \\\"(\
    (lambda (reason)
      (promise-reject `(fail-git-info-command ,reason)))))
 
-(defun dired-git--promise-create-hash-table (buf stdout)
-  "Return promise to create hash table from STDOUT in BUF.
+(defun dired-git--promise-create-hash-table (_buf stdout)
+  "Return promise to create hash table from STDOUT.
 STDOUT is return value form `dired-git--promise-git-info'."
   (promise-then
    (promise:async-start
@@ -163,8 +163,6 @@ STDOUT is return value form `dired-git--promise-git-info'."
          (puthash "**dired-git/width**" width-alist table)
          (prin1-to-string table))))
    (lambda (res)
-     (with-current-buffer buf
-       (setq-local dired-git-hashtable res))
      (promise-resolve (read res)))
    (lambda (reason)
      (promise-reject `(fail-create-hash-table ,stdout ,reason)))))
@@ -238,11 +236,12 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
             (setq-local dired-git-hashtable nil)
             (dired-git--remove-all-overlays))
           (let* ((buf* (or buf (current-buffer)))
-                 (res (await (dired-git--promise-git-info buf*)))
-                 (res (await (dired-git--promise-create-hash-table buf* res)))
-                 (res (await (dired-git--promise-add-annotation buf* res)))))
+                 (res  (await (dired-git--promise-git-info buf*)))
+                 (hash (await (dired-git--promise-create-hash-table buf* res)))
+                 (res  (await (dired-git--promise-add-annotation buf* hash)))))
           (with-current-buffer buf*
-            (setq-local dired-git-working nil)))
+            (setq-local dired-git-working nil)
+            (setq-local dired-git-hashtable hash)))
       (error
        (pcase err
          (`(error (fail-git-info-command ,reason))
