@@ -194,12 +194,12 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                             (point)
                             (concat
                              (format "%s " (all-the-icons-octicon "git-branch"))
-                             (format (format "%%-%ds " w-branch)
+                             (format (format "%%-%ds\t" w-branch)
                                      (propertize branch 'face
                                                  (if (string= "master" branch)
                                                      'dired-git-branch-master
                                                    'dired-git-branch-else)))
-                             (format "%s "
+                             (format "%s\t"
                                      (cond
                                       ((string= "true" ff)
                                        (all-the-icons-octicon "rocket"))
@@ -207,13 +207,14 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                                        (all-the-icons-octicon "x"))
                                       ((string= "missing" ff)
                                        (all-the-icons-octicon "stop" :v-adjust -0.2))))
-                             (format "%s "
+                             (format "%s\t"
                                      (cond
                                       ((string= "missing" ff)
                                        (all-the-icons-octicon "stop" :v-adjust -0.2))
                                       (t
                                        (all-the-icons-octicon "diff-added"))))
-                             (format "%s " forward))))
+                             (format "%s\t"
+                                     (if (string= "missing" forward) "?" forward)))))
                        (dired-git--add-overlay
                         (point)
                         (format (format "%%%ds %%%ds %%%ds" (+ 2 w-branch) w-ff w-forward)
@@ -232,6 +233,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
     (condition-case err
         (unless dired-git-working
           (with-current-buffer buf*
+            (setq-local tab-width 1)
             (setq-local dired-git-working t)
             (setq-local dired-git-hashtable nil)
             (dired-git--remove-all-overlays))
