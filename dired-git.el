@@ -238,10 +238,10 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
           (let* ((buf* (or buf (current-buffer)))
                  (res  (await (dired-git--promise-git-info buf*)))
                  (hash (await (dired-git--promise-create-hash-table buf* res)))
-                 (res  (await (dired-git--promise-add-annotation buf* hash)))))
-          (with-current-buffer buf*
-            (setq-local dired-git-working nil)
-            (setq-local dired-git-hashtable hash)))
+                 (res  (await (dired-git--promise-add-annotation buf* hash))))
+            (with-current-buffer buf*
+              (setq-local dired-git-working nil)
+              (setq-local dired-git-hashtable hash))))
       (error
        (pcase err
          (`(error (fail-git-info-command ,reason))
