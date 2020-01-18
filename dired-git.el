@@ -115,10 +115,10 @@ WIDTH stored maxlength to align column."
         (concat
          (format (format "%%s %%-%ds\t" w-branch)
                  (all-the-icons-octicon "git-branch")
-                 (propertize .branch 'face
-                             (if (string= "master" .branch)
-                                 'dired-git-branch-master
-                               'dired-git-branch-else)))
+                 (propertize .branch
+                             'face (if (string= "master" .branch)
+                                       'dired-git-branch-master
+                                     'dired-git-branch-else)))
          (format (format "%%s\t%%%ds\t" w-forward)
                  (cond
                   ((string= "missing" .ff)
