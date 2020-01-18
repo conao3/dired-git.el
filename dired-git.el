@@ -119,13 +119,17 @@ WIDTH stored maxlength to align column."
                              'face (if (string= "master" .branch)
                                        'dired-git-branch-master
                                      'dired-git-branch-else)))
-         (format (format "%%s\t%%%ds\t" w-forward)
-                 (cond
-                  ((string= "missing" .ff)
-                   (all-the-icons-octicon "stop" :v-adjust 0.0))
-                  (t
-                   (all-the-icons-octicon "diff-added" :v-adjust 0.0)))
-                 .forward))))))
+         (format (format "%%s\t%%-%ds\t" w-forward)
+                 (if (string= "0" .forward)
+                     "  "
+                   (cond
+                    ((string= "missing" .ff)
+                     (all-the-icons-octicon "stop" :v-adjust 0.0))
+                    (t
+                     (all-the-icons-octicon "diff-added" :v-adjust 0.0))))
+                 (if (string= "0" .forward)
+                     ""
+                   .forward)))))))
 
 (defun dired-git--promise-git-info (buf)
   "Return promise to get branch name for dired BUF."
