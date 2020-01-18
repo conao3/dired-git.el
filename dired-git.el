@@ -239,12 +239,12 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell commands"
   (interactive (list (prog1 (current-buffer)
                        (setq-local dired-git-working nil))))
-  (if (not dired-git-mode)
-      (error "`dired-git-mode' is not enabled")
-    (let* ((buf* (or buf (current-buffer)))
-           (cachep* (and cachep
-                         (with-current-buffer buf* dired-git-hashtable)))
-           stdout hash ov)
+  (let* ((buf* (or buf (current-buffer)))
+         (cachep* (and cachep
+                       (with-current-buffer buf* dired-git-hashtable)))
+         stdout hash ov)
+    (if (with-current-buffer buf* (not dired-git-mode))
+        (error "`dired-git-mode' is not enabled")
       (condition-case err
           (unless dired-git-working
             (with-current-buffer buf*
