@@ -241,18 +241,23 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
                        (setq-local dired-git-working nil))))
   (if (not dired-git-mode)
       (error "`dired-git-mode' is not enabled")
-    (let ((buf* (or buf (current-buffer)))
-          stdout hash ov)
+    (let* ((buf* (or buf (current-buffer)))
+           (cachep* (and cachep
+                         (with-current-buffer buf* dired-git-hashtable)))
+           stdout hash ov)
       (condition-case err
           (unless dired-git-working
             (with-current-buffer buf*
               (setq-local tab-width 1)
               (setq-local dired-git-working t)
-              (setq-local dired-git-hashtable nil)
+              (if cachep*
+                  (setq hash dired-git-hashtable)
+                (setq-local dired-git-hashtable nil))
               (dired-git--remove-all-overlays))
-            (setq stdout (await (dired-git--promise-git-info buf*)))
-            (setq hash   (await (dired-git--promise-create-hash-table buf* stdout)))
-            (setq ov     (await (dired-git--promise-add-annotation buf* hash)))
+            (unless cachep*
+              (setq stdout (await (dired-git--promise-git-info buf*)))
+              (setq hash   (await (dired-git--promise-create-hash-table buf* stdout))))
+            (setq ov (await (dired-git--promise-add-annotation buf* hash)))
             (unless ov
               (error "Nil is returned from `dired-git--promise-add-annotation'"))
             (with-current-buffer buf*
