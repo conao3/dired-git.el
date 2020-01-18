@@ -243,58 +243,59 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
          (cachep* (and cachep
                        (with-current-buffer buf* dired-git-hashtable)))
          stdout hash ov)
-    (if (with-current-buffer buf* (not dired-git-mode))
-        (error "`dired-git-mode' is not enabled")
-      (condition-case err
-          (unless dired-git-working
-            (with-current-buffer buf*
-              (setq-local tab-width 1)
-              (setq-local dired-git-working t)
-              (if cachep*
-                  (setq hash dired-git-hashtable)
-                (setq-local dired-git-hashtable nil))
-              (dired-git--remove-all-overlays))
-            (unless cachep*
-              (setq stdout (await (dired-git--promise-git-info buf*)))
-              (setq hash   (await (dired-git--promise-create-hash-table buf* stdout))))
-            (setq ov (await (dired-git--promise-add-annotation buf* hash)))
-            (unless ov
-              (error "Nil is returned from `dired-git--promise-add-annotation'"))
-            (with-current-buffer buf*
-              (setq-local dired-git-working nil)
-              (setq-local dired-git-hashtable hash)))
-        (error
-         (pcase err
-           (`(error (fail-git-info-command ,reason))
-            (warn "Fail invoke git command
+    (condition-case err
+        (when (and (with-current-buffer buf* dired-git-mode)
+                   (not dired-git-working))
+          (with-current-buffer buf*
+            (setq-local tab-width 1)
+            (setq-local dired-git-working t)
+            (if cachep*
+                (setq hash dired-git-hashtable)
+              (setq-local dired-git-hashtable nil))
+            (dired-git--remove-all-overlays))
+          (unless cachep*
+            (setq stdout (await (dired-git--promise-git-info buf*)))
+            (setq hash   (await (dired-git--promise-create-hash-table buf* stdout))))
+          (setq ov (await (dired-git--promise-add-annotation buf* hash)))
+          (unless ov
+            (error "Nil is returned from `dired-git--promise-add-annotation'"))
+          (with-current-buffer buf*
+            (setq-local dired-git-working nil)
+            (setq-local dired-git-hashtable hash)))
+      (error
+       (pcase err
+         (`(error (fail-git-info-command ,reason))
+          (warn "Fail invoke git command
   buffer: %s\n  reason:%s"
-                  (prin1-to-string buf*) reason))
-           (`(error (fail-git-info-invalid-output ,stdout ,stderr))
-            (warn "Fail invoke git command.  Include stderr output
+                (prin1-to-string buf*) reason))
+         (`(error (fail-git-info-invalid-output ,stdout ,stderr))
+          (warn "Fail invoke git command.  Include stderr output
   buffer: %s\n  stdout: %s\n  stderr: %s"
-                  (prin1-to-string buf*) stdout stderr))
-           (`(error (fail-create-hash-table ,stdout ,reason))
-            (warn "Fail create hash table
+                (prin1-to-string buf*) stdout stderr))
+         (`(error (fail-create-hash-table ,stdout ,reason))
+          (warn "Fail create hash table
   buffer: %s\n  stdout: %s\n  reason: %s"
-                  (prin1-to-string buf*) stdout reason))
-           (`(error (fail-add-annotation ,table ,reason))
-            (warn "Fail add annotation
+                (prin1-to-string buf*) stdout reason))
+         (`(error (fail-add-annotation ,table ,reason))
+          (warn "Fail add annotation
   buffer: %s\n  table: %s\n  reason: %s"
-                  (prin1-to-string buf*) table  reason))
-           (_
-            (warn "Fail dired-git-refresh
+                (prin1-to-string buf*) table  reason))
+         (_
+          (warn "Fail dired-git-refresh
   buffer: %s\n  reason: %s"
-                  (prin1-to-string buf*) err))))))))
+                (prin1-to-string buf*) err)))))))
 
 (defun dired-git--advice-refresh (fn &rest args)
   "Advice function for FN with ARGS."
   (apply fn args)
-  (dired-git-refresh))
+  (when dired-git-mode
+    (dired-git-refresh)))
 
 (defun dired-git--advice-refresh-using-cache (fn &rest args)
   "Advice function for FN with ARGS."
   (apply fn args)
-  (dired-git-refresh nil 'cache))
+  (when dired-git-mode
+    (dired-git-refresh nil 'cache)))
 
 (defvar dired-git-advice-alist
   '((dired-readin                . dired-git--advice-refresh)
