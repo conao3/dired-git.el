@@ -87,7 +87,9 @@
 ;;; Function
 
 (defvar dired-git-width-header "**dired-git/width**"
-  "String used as key to save width meta information.")
+  "String used as key to save width meta information.
+Must contain a slash(/).  This ensures that it does not conflict
+with file names.  Because slashes are never included in file names.")
 
 (defvar-local dired-git-working nil
   "If non-nil, now working dired-git process.")
@@ -111,7 +113,7 @@ WIDTH stored maxlength to align column."
          (format "%s\t" "  ")
          (format (format "%%%ds\t" w-forward) " "))
       (let-alist data
-        ;; branch remote ff forward
+        ;; branch, remote, ff, forwarda
         (concat
          (format (format "%%s %%-%ds\t" w-branch)
                  (all-the-icons-octicon "git-branch")
