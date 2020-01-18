@@ -109,7 +109,6 @@ WIDTH stored maxlength to align column."
         (concat
          ;; all-the-icons width equals 2 spaces
          (format (format "%%s %%-%ds\t" w-branch) "  " "")
-         (format "%s\t" "  ")
          (format (format "%%s\t%%%ds\t" w-forward) "  " ""))
       (let-alist data
         ;; branch, remote, ff, forwarda
@@ -120,14 +119,6 @@ WIDTH stored maxlength to align column."
                              (if (string= "master" .branch)
                                  'dired-git-branch-master
                                'dired-git-branch-else)))
-         (format "%s\t"
-                 (cond
-                  ((string= "true" .ff)
-                   (all-the-icons-octicon "rocket"))
-                  ((string= "false" .ff)
-                   (all-the-icons-octicon "x"))
-                  ((string= "missing" .ff)
-                   (all-the-icons-octicon "stop" :v-adjust -0.2))))
          (format (format "%%s\t%%%ds\t" w-forward)
                  (cond
                   ((string= "missing" .ff)
