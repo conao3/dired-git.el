@@ -98,19 +98,21 @@ Key is file absolute path, value is alist of information.")
 WIDTH stored maxlength to align column."
   (let ((data (gethash file table))
         (w-branch  (alist-get :branch width))
-        (w-remote  (alist-get :remote width))
-        (w-ff      2)
-        (w-forward 2))
+        (w-forward (alist-get :forward width)))
     (if (not data)
-        (format (format "%%%ds %%%ds %%%ds" (+ 2 w-branch) w-ff w-forward)
-                "" "" "" "")
+        (concat
+         ;; all-the-icons width equals 2 spaces
+         (format (format "%%s %%-%ds\t" w-branch) "  " "")
+         (format "%s\t" "  ")
+         (format "%s\t" "  ")
+         (format (format "%%%ds\t" w-forward) " "))
       (let ((branch  (alist-get :branch data))
             (_remote (alist-get :remote data))
             (ff      (alist-get :ff data))
             (forward (alist-get :forward data)))
         (concat
-         (format "%s " (all-the-icons-octicon "git-branch"))
-         (format (format "%%-%ds\t" w-branch)
+         (format (format "%%s %%-%ds\t" w-branch)
+                 (all-the-icons-octicon "git-branch")
                  (propertize branch 'face
                              (if (string= "master" branch)
                                  'dired-git-branch-master
@@ -129,8 +131,7 @@ WIDTH stored maxlength to align column."
                    (all-the-icons-octicon "stop" :v-adjust -0.2))
                   (t
                    (all-the-icons-octicon "diff-added"))))
-         (format "%s\t"
-                 (if (string= "missing" forward) "?" forward)))))))
+         (format (format "%%%ds\t" w-forward) forward))))))
 
 (defun dired-git--promise-git-info (buf)
   "Return promise to get branch name for dired BUF."
@@ -151,7 +152,7 @@ remote=\\\"\\$(git config --get branch.\\${branch}.remote)\\\"
 git rev-parse \\${remote}/\\${branch} >/dev/null 2>&1
 if [ 0 -ne \\$? ]; then
   ff=\\\"missing\\\"
-  forward=\\\"missing\\\"
+  forward=\\\"-\\\"
 else
   ff=\\\"\\$(if [ 0 -eq \\$(git rev-list --count \\${remote}/\\${branch}..\\${branch}) ]; then
     echo true
