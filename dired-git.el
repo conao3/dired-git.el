@@ -228,17 +228,15 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
      (condition-case err
          (with-current-buffer buf
            (when-let* ((width (gethash dired-git-width-header table)))
-             (save-restriction
-               (widen)
-               (save-excursion
-                 (goto-char (point-min))
-                 (while (not (eobp))
-                   (when-let ((file (dired-get-filename nil 'noerror)))
-                     (dired-git--add-overlay
-                      (point)
-                      (dired-git--create-overlay-string table file width)))
-                   (dired-next-line 1))
-                 (funcall resolve t)))))
+             (save-excursion
+               (goto-char (point-min))
+               (while (not (eobp))
+                 (when-let ((file (dired-get-filename nil 'noerror)))
+                   (dired-git--add-overlay
+                    (point)
+                    (dired-git--create-overlay-string table file width)))
+                 (dired-next-line 1))
+               (funcall resolve t))))
        (error
         (funcall reject `(fail-add-annotation ,table ,err)))))))
 
