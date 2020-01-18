@@ -236,8 +236,10 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 
 ;;; Main
 
-(async-defun dired-git--refresh (&optional buf)
+(async-defun dired-git-refresh (&optional buf)
   "Refresh git overlays for BUF or `current-buffer'."
+  (interactive (list (prog1 (current-buffer)
+                       (setq-local dired-git-working nil))))
   (let ((buf* (or buf (current-buffer))))
     (condition-case err
         (unless dired-git-working
@@ -272,7 +274,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
   buffer: %s\n  table: %s\n  reason: %s"
                 (prin1-to-string buf*) table  reason))
          (_
-          (warn "Fail dired-git--refresh
+          (warn "Fail dired-git-refresh
   buffer: %s\n  reason: %s"
                 (prin1-to-string buf*) err)))))))
 
@@ -280,7 +282,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
   "Advice function for FN with ARGS."
   (apply fn args)
   (when dired-git-mode
-    (dired-git--refresh)))
+    (dired-git-refresh)))
 
 (defvar dired-git-advice-alist
   '((dired-readin . dired-git--refresh-advice)
@@ -293,7 +295,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
   "Setup dired-git minor-mode."
   (pcase-dolist (`(,sym . ,fn) dired-git-advice-alist)
     (advice-add sym :around fn))
-  (dired-git--refresh (current-buffer)))
+  (dired-git-refresh (current-buffer)))
 
 (defun dired-git--teardown ()
   "Teardown all overlays added by dired-git."
