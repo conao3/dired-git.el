@@ -110,32 +110,30 @@ WIDTH stored maxlength to align column."
          (format "%s\t" "  ")
          (format "%s\t" "  ")
          (format (format "%%%ds\t" w-forward) " "))
-      (let ((branch  (alist-get :branch data))
-            (_remote (alist-get :remote data))
-            (ff      (alist-get :ff data))
-            (forward (alist-get :forward data)))
+      (let-alist data
+        ;; :branch :remote :ff :forward
         (concat
          (format (format "%%s %%-%ds\t" w-branch)
                  (all-the-icons-octicon "git-branch")
-                 (propertize branch 'face
-                             (if (string= "master" branch)
+                 (propertize .:branch 'face
+                             (if (string= "master" .:branch)
                                  'dired-git-branch-master
                                'dired-git-branch-else)))
          (format "%s\t"
                  (cond
-                  ((string= "true" ff)
+                  ((string= "true" .:ff)
                    (all-the-icons-octicon "rocket"))
-                  ((string= "false" ff)
+                  ((string= "false" .:ff)
                    (all-the-icons-octicon "x"))
-                  ((string= "missing" ff)
+                  ((string= "missing" .:ff)
                    (all-the-icons-octicon "stop" :v-adjust -0.2))))
          (format "%s\t"
                  (cond
-                  ((string= "missing" ff)
+                  ((string= "missing" .:ff)
                    (all-the-icons-octicon "stop" :v-adjust -0.2))
                   (t
                    (all-the-icons-octicon "diff-added"))))
-         (format (format "%%%ds\t" w-forward) forward))))))
+         (format (format "%%%ds\t" w-forward) .:forward))))))
 
 (defun dired-git--promise-git-info (buf)
   "Return promise to get branch name for dired BUF."
