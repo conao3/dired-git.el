@@ -93,6 +93,44 @@
   "Hashtable stored git information.
 Key is file absolute path, value is alist of information.")
 
+(defun dired-git--create-overlay-string (file width table)
+  "Create overlay string from data for FILE from TABLE.
+WIDTH stored maxlength to align column."
+  (let ((w-branch  (alist-get :branch width))
+        (w-remote  (alist-get :remote width))
+        (w-ff      2)
+        (w-forward 2))
+    (if-let ((data (gethash file table)))
+        (let ((branch  (alist-get :branch data))
+              (_remote (alist-get :remote data))
+              (ff      (alist-get :ff data))
+              (forward (alist-get :forward data)))
+          (concat
+           (format "%s " (all-the-icons-octicon "git-branch"))
+           (format (format "%%-%ds\t" w-branch)
+                   (propertize branch 'face
+                               (if (string= "master" branch)
+                                   'dired-git-branch-master
+                                 'dired-git-branch-else)))
+           (format "%s\t"
+                   (cond
+                    ((string= "true" ff)
+                     (all-the-icons-octicon "rocket"))
+                    ((string= "false" ff)
+                     (all-the-icons-octicon "x"))
+                    ((string= "missing" ff)
+                     (all-the-icons-octicon "stop" :v-adjust -0.2))))
+           (format "%s\t"
+                   (cond
+                    ((string= "missing" ff)
+                     (all-the-icons-octicon "stop" :v-adjust -0.2))
+                    (t
+                     (all-the-icons-octicon "diff-added"))))
+           (format "%s\t"
+                   (if (string= "missing" forward) "?" forward))))
+      (format (format "%%%ds %%%ds %%%ds" (+ 2 w-branch) w-ff w-forward)
+              "" "" "" ""))))
+
 (defun dired-git--promise-git-info (buf)
   "Return promise to get branch name for dired BUF."
   (promise-then
@@ -174,51 +212,16 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
    (lambda (resolve reject)
      (condition-case err
          (with-current-buffer buf
-           (when-let* ((width (gethash "**dired-git/width**" table))
-                       (w-branch  (alist-get :branch width))
-                       (w-remote  (alist-get :remote width))
-                       (w-ff      2)
-                       (w-forward 2))
+           (when-let* ((width (gethash "**dired-git/width**" table)))
              (save-restriction
                (widen)
                (save-excursion
                  (goto-char (point-min))
                  (while (not (eobp))
                    (when-let ((file (dired-get-filename nil 'noerror)))
-                     (if-let ((data (gethash file table)))
-                         (let ((branch  (alist-get :branch data))
-                               (_remote (alist-get :remote data))
-                               (ff      (alist-get :ff data))
-                               (forward (alist-get :forward data)))
-                           (dired-git--add-overlay
-                            (point)
-                            (concat
-                             (format "%s " (all-the-icons-octicon "git-branch"))
-                             (format (format "%%-%ds\t" w-branch)
-                                     (propertize branch 'face
-                                                 (if (string= "master" branch)
-                                                     'dired-git-branch-master
-                                                   'dired-git-branch-else)))
-                             (format "%s\t"
-                                     (cond
-                                      ((string= "true" ff)
-                                       (all-the-icons-octicon "rocket"))
-                                      ((string= "false" ff)
-                                       (all-the-icons-octicon "x"))
-                                      ((string= "missing" ff)
-                                       (all-the-icons-octicon "stop" :v-adjust -0.2))))
-                             (format "%s\t"
-                                     (cond
-                                      ((string= "missing" ff)
-                                       (all-the-icons-octicon "stop" :v-adjust -0.2))
-                                      (t
-                                       (all-the-icons-octicon "diff-added"))))
-                             (format "%s\t"
-                                     (if (string= "missing" forward) "?" forward)))))
-                       (dired-git--add-overlay
-                        (point)
-                        (format (format "%%%ds %%%ds %%%ds" (+ 2 w-branch) w-ff w-forward)
-                                "" "" "" ""))))
+                     (dired-git--add-overlay
+                      (point)
+                      (dired-git--create-overlay-string file width table)))
                    (dired-next-line 1))
                  (funcall resolve t)))))
        (error
