@@ -110,8 +110,7 @@ WIDTH stored maxlength to align column."
          ;; all-the-icons width equals 2 spaces
          (format (format "%%s %%-%ds\t" w-branch) "  " "")
          (format "%s\t" "  ")
-         (format "%s\t" "  ")
-         (format (format "%%%ds\t" w-forward) " "))
+         (format (format "%%s\t%%%ds\t" w-forward) "  " ""))
       (let-alist data
         ;; branch, remote, ff, forwarda
         (concat
@@ -129,13 +128,13 @@ WIDTH stored maxlength to align column."
                    (all-the-icons-octicon "x"))
                   ((string= "missing" .ff)
                    (all-the-icons-octicon "stop" :v-adjust -0.2))))
-         (format "%s\t"
+         (format (format "%%s\t%%%ds\t" w-forward)
                  (cond
                   ((string= "missing" .ff)
                    (all-the-icons-octicon "stop" :v-adjust -0.2))
                   (t
-                   (all-the-icons-octicon "diff-added"))))
-         (format (format "%%%ds\t" w-forward) .forward))))))
+                   (all-the-icons-octicon "diff-added")))
+                 .forward))))))
 
 (defun dired-git--promise-git-info (buf)
   "Return promise to get branch name for dired BUF."
