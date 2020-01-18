@@ -240,49 +240,50 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
   "Refresh git overlays for BUF or `current-buffer'."
   (interactive (list (prog1 (current-buffer)
                        (setq-local dired-git-working nil))))
-  (let ((buf* (or buf (current-buffer))))
-    (condition-case err
-        (unless dired-git-working
-          (with-current-buffer buf*
-            (setq-local tab-width 1)
-            (setq-local dired-git-working t)
-            (setq-local dired-git-hashtable nil)
-            (dired-git--remove-all-overlays))
-          (let* ((buf* (or buf (current-buffer)))
-                 (res  (await (dired-git--promise-git-info buf*)))
-                 (hash (await (dired-git--promise-create-hash-table buf* res)))
-                 (res  (await (dired-git--promise-add-annotation buf* hash))))
+  (if (not dired-git-mode)
+      (error "`dired-git-mode' is not enabled")
+    (let ((buf* (or buf (current-buffer))))
+      (condition-case err
+          (unless dired-git-working
             (with-current-buffer buf*
-              (setq-local dired-git-working nil)
-              (setq-local dired-git-hashtable hash))))
-      (error
-       (pcase err
-         (`(error (fail-git-info-command ,reason))
-          (warn "Fail invoke git command
+              (setq-local tab-width 1)
+              (setq-local dired-git-working t)
+              (setq-local dired-git-hashtable nil)
+              (dired-git--remove-all-overlays))
+            (let* ((buf* (or buf (current-buffer)))
+                   (res  (await (dired-git--promise-git-info buf*)))
+                   (hash (await (dired-git--promise-create-hash-table buf* res)))
+                   (res  (await (dired-git--promise-add-annotation buf* hash))))
+              (with-current-buffer buf*
+                (setq-local dired-git-working nil)
+                (setq-local dired-git-hashtable hash))))
+        (error
+         (pcase err
+           (`(error (fail-git-info-command ,reason))
+            (warn "Fail invoke git command
   buffer: %s\n  reason:%s"
-                (prin1-to-string buf*) reason))
-         (`(error (fail-git-info-invalid-output ,stdout ,stderr))
-          (warn "Fail invoke git command.  Include stderr output
+                  (prin1-to-string buf*) reason))
+           (`(error (fail-git-info-invalid-output ,stdout ,stderr))
+            (warn "Fail invoke git command.  Include stderr output
   buffer: %s\n  stdout: %s\n  stderr: %s"
-                (prin1-to-string buf*) stdout stderr))
-         (`(error (fail-create-hash-table ,stdout ,reason))
-          (warn "Fail create hash table
+                  (prin1-to-string buf*) stdout stderr))
+           (`(error (fail-create-hash-table ,stdout ,reason))
+            (warn "Fail create hash table
   buffer: %s\n  stdout: %s\n  reason: %s"
-                (prin1-to-string buf*) stdout reason))
-         (`(error (fail-add-annotation ,table ,reason))
-          (warn "Fail add annotation
+                  (prin1-to-string buf*) stdout reason))
+           (`(error (fail-add-annotation ,table ,reason))
+            (warn "Fail add annotation
   buffer: %s\n  table: %s\n  reason: %s"
-                (prin1-to-string buf*) table  reason))
-         (_
-          (warn "Fail dired-git-refresh
+                  (prin1-to-string buf*) table  reason))
+           (_
+            (warn "Fail dired-git-refresh
   buffer: %s\n  reason: %s"
-                (prin1-to-string buf*) err)))))))
+                  (prin1-to-string buf*) err))))))))
 
 (defun dired-git--refresh-advice (fn &rest args)
   "Advice function for FN with ARGS."
   (apply fn args)
-  (when dired-git-mode
-    (dired-git-refresh)))
+  (dired-git-refresh))
 
 (defvar dired-git-advice-alist
   '((dired-readin . dired-git--refresh-advice)
@@ -309,9 +310,11 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
   :keymap dired-git-mode-map
   :lighter " Dired-git"
   :group 'dired-git
-  (if dired-git-mode
-      (dired-git--setup)
-    (dired-git--teardown)))
+  (if (not (derived-mode-p 'dired-mode))
+      (error "`dired-git-mode' is only compatible with `dired-mode'")
+    (if dired-git-mode
+        (dired-git--setup)
+      (dired-git--teardown))))
 
 (provide 'dired-git)
 
