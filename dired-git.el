@@ -122,9 +122,9 @@ WIDTH stored maxlength to align column."
          (format (format "%%s\t%%%ds\t" w-forward)
                  (cond
                   ((string= "missing" .ff)
-                   (all-the-icons-octicon "stop" :v-adjust -0.2))
+                   (all-the-icons-octicon "stop" :v-adjust 0.0))
                   (t
-                   (all-the-icons-octicon "diff-added")))
+                   (all-the-icons-octicon "diff-added" :v-adjust 0.0)))
                  .forward))))))
 
 (defun dired-git--promise-git-info (buf)
