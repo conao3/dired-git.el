@@ -286,16 +286,21 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
   buffer: %s\n  reason: %s"
                   (prin1-to-string buf*) err))))))))
 
-(defun dired-git--refresh-advice (fn &rest args)
+(defun dired-git--advice-refresh (fn &rest args)
   "Advice function for FN with ARGS."
   (apply fn args)
   (dired-git-refresh))
 
+(defun dired-git--advice-refresh-using-cache (fn &rest args)
+  "Advice function for FN with ARGS."
+  (apply fn args)
+  (dired-git-refresh nil 'cache))
+
 (defvar dired-git-advice-alist
-  '((dired-readin . dired-git--refresh-advice)
-    (dired-revert . dired-git--refresh-advice)
-    (dired-internal-do-deletions . dired-git--refresh-advice)
-    (dired-narrow--internal . dired-git--refresh-advice))
+  '((dired-readin                . dired-git--advice-refresh)
+    (dired-revert                . dired-git--advice-refresh)
+    (dired-internal-do-deletions . dired-git--advice-refresh-using-cache)
+    (dired-narrow--internal      . dired-git--advice-refresh-using-cache))
   "Alist defined advice functions.")
 
 (defun dired-git--setup ()
