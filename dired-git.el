@@ -86,6 +86,9 @@
 
 ;;; Function
 
+(defvar dired-git-width-header "**dired-git/width**"
+  "String used as key to save width meta information.")
+
 (defvar-local dired-git-working nil
   "If non-nil, now working dired-git process.")
 
@@ -93,12 +96,13 @@
   "Hashtable stored git information.
 Key is file absolute path, value is alist of information.")
 
-(defun dired-git--create-overlay-string (file width table)
+(defun dired-git--create-overlay-string (table file &optional width)
   "Create overlay string from data for FILE from TABLE.
 WIDTH stored maxlength to align column."
-  (let ((data (gethash file table))
-        (w-branch  (alist-get :branch width))
-        (w-forward (alist-get :forward width)))
+  (let* ((data (gethash file table))
+         (width* (or width (gethash dired-git-width-header table)))
+         (w-branch  (alist-get :branch width*))
+         (w-forward (alist-get :forward width*)))
     (if (not data)
         (concat
          ;; all-the-icons width equals 2 spaces
@@ -200,7 +204,7 @@ STDOUT is return value form `dired-git--promise-git-info'."
              (when-let ((width (string-width (plist-get elm key))))
                (when (< (or (alist-get key width-alist) 0) width)
                  (setf (alist-get key width-alist) width)))))
-         (puthash "**dired-git/width**" width-alist table)
+         (puthash ,dired-git-width-header width-alist table)
          (prin1-to-string table))))
    (lambda (res)
      (promise-resolve (read res)))
@@ -214,7 +218,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
    (lambda (resolve reject)
      (condition-case err
          (with-current-buffer buf
-           (when-let* ((width (gethash "**dired-git/width**" table)))
+           (when-let* ((width (gethash dired-git-width-header table)))
              (save-restriction
                (widen)
                (save-excursion
@@ -223,7 +227,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
                    (when-let ((file (dired-get-filename nil 'noerror)))
                      (dired-git--add-overlay
                       (point)
-                      (dired-git--create-overlay-string file width table)))
+                      (dired-git--create-overlay-string table file width)))
                    (dired-next-line 1))
                  (funcall resolve t)))))
        (error
