@@ -49,6 +49,11 @@
     map)
   "Keymap of interactive commands.")
 
+(defcustom dired-git-disable-dirs '("~/")
+  "List of directory that disables `dired-git' even if it is enabled."
+  :group 'dired-git
+  :type 'sexp)
+
 (defface dired-git-branch-master
   '((t (:foreground "SpringGreen" :weight bold)))
   "Face of showing branch master.")
@@ -250,8 +255,12 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
                        (with-current-buffer buf* dired-git-hashtable)))
          stdout hash ov)
     (condition-case err
-        (when (and (with-current-buffer buf* dired-git-mode)
-                   (not dired-git-working))
+        (when (with-current-buffer buf*
+                (and dired-git-mode
+                     (not dired-git-working)
+                     (not (member
+                           (expand-file-name dired-directory)
+                           (mapcar 'expand-file-name dired-git-disable-dirs)))))
           (with-current-buffer buf*
             (setq-local tab-width 1)
             (setq-local dired-git-working t)
