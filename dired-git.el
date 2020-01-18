@@ -125,7 +125,7 @@ WIDTH stored maxlength to align column."
                  (if (string= "0" .forward)
                      "  "
                    (cond
-                    ((string= "missing" .ff)
+                    ((string= "-" .forward)
                      (all-the-icons-octicon "stop" :v-adjust 0.0))
                     (t
                      (all-the-icons-octicon "diff-added" :v-adjust 0.0))))
@@ -136,7 +136,7 @@ WIDTH stored maxlength to align column."
                  (if (string= "0" .behind)
                      "  "
                    (cond
-                    ((string= "missing" .ff)
+                    ((string= "-" .behind)
                      (all-the-icons-octicon "stop" :v-adjust 0.0))
                     (t
                      (all-the-icons-octicon "diff-removed" :v-adjust 0.0))))
@@ -162,15 +162,9 @@ remote=\\\"\\$(git config --get branch.\\${branch}.remote)\\\"
 
 git rev-parse \\${remote}/\\${branch} >/dev/null 2>&1
 if [ 0 -ne \\$? ]; then
-  ff=\\\"missing\\\"
   forward=\\\"-\\\"
   behind=\\\"-\\\"
 else
-  ff=\\\"\\$(if [ 0 -eq \\$(git rev-list --count \\${remote}/\\${branch}..\\${branch}) ]; then
-    echo true
-  else
-    echo false
-  fi)\\\"
   forward=\\\"\\$(git log \\${remote}/\\${branch}..\\${branch} --oneline | wc -l)\\\"
   behind=\\\"\\$(git log \\${branch}..\\${remote}/\\${branch} --oneline | wc -l)\\\"
 fi
@@ -179,7 +173,6 @@ echo \\\"(\
  file \\\\\\\"\\$PWD\\\\\\\"\
  branch \\\\\\\"\\${branch}\\\\\\\"\
  remote \\\\\\\"\\${remote}\\\\\\\"\
- ff \\\\\\\"\\${ff}\\\\\\\"\
  forward \\\\\\\"\\${forward}\\\\\\\"\
  behind \\\\\\\"\\${behind}\\\\\\\"\
 )\\\"
@@ -207,11 +200,10 @@ STDOUT is return value form `dired-git--promise-git-info'."
            (puthash (plist-get elm 'file)
                     `((branch  . ,(plist-get elm 'branch))
                       (remote  . ,(plist-get elm 'remote))
-                      (ff      . ,(plist-get elm 'ff))
                       (forward . ,(plist-get elm 'forward))
                       (behind  . ,(plist-get elm 'behind)))
                     table)
-           (dolist (key '(branch remote ff forward behind))
+           (dolist (key '(branch remote forward behind))
              (when-let ((width (string-width (plist-get elm key))))
                (when (< (or (alist-get key width-alist) 0) width)
                  (setf (alist-get key width-alist) width)))))
