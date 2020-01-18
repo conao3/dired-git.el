@@ -188,10 +188,10 @@ STDOUT is return value form `dired-git--promise-git-info'."
    (promise:async-start
     `(lambda ()
        (require 'subr-x)
-       (let ((info (read (format "(%s)" ,stdout)))
+       (let ((stdout (read (format "(%s)" ,stdout)))
              (table (make-hash-table :test 'equal))
              width-alist)
-         (dolist (elm info)
+         (dolist (elm stdout)
            (puthash (plist-get elm 'file)
                     `((branch  . ,(plist-get elm 'branch))
                       (remote  . ,(plist-get elm 'remote))
@@ -234,13 +234,15 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
 
 ;;; Main
 
-(async-defun dired-git-refresh (&optional buf)
-  "Refresh git overlays for BUF or `current-buffer'."
+(async-defun dired-git-refresh (&optional buf cachep)
+  "Refresh git overlays for BUF or `current-buffer'.
+IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell commands"
   (interactive (list (prog1 (current-buffer)
                        (setq-local dired-git-working nil))))
   (if (not dired-git-mode)
       (error "`dired-git-mode' is not enabled")
-    (let ((buf* (or buf (current-buffer))))
+    (let ((buf* (or buf (current-buffer)))
+          stdout hash ov)
       (condition-case err
           (unless dired-git-working
             (with-current-buffer buf*
@@ -248,13 +250,14 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
               (setq-local dired-git-working t)
               (setq-local dired-git-hashtable nil)
               (dired-git--remove-all-overlays))
-            (let* ((buf* (or buf (current-buffer)))
-                   (res  (await (dired-git--promise-git-info buf*)))
-                   (hash (await (dired-git--promise-create-hash-table buf* res)))
-                   (res  (await (dired-git--promise-add-annotation buf* hash))))
-              (with-current-buffer buf*
-                (setq-local dired-git-working nil)
-                (setq-local dired-git-hashtable hash))))
+            (setq stdout (await (dired-git--promise-git-info buf*)))
+            (setq hash   (await (dired-git--promise-create-hash-table buf* stdout)))
+            (setq ov     (await (dired-git--promise-add-annotation buf* hash)))
+            (unless ov
+              (error "Nil is returned from `dired-git--promise-add-annotation'"))
+            (with-current-buffer buf*
+              (setq-local dired-git-working nil)
+              (setq-local dired-git-hashtable hash)))
         (error
          (pcase err
            (`(error (fail-git-info-command ,reason))
