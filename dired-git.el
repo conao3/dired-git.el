@@ -101,8 +101,8 @@ Key is file absolute path, value is alist of information.")
 WIDTH stored maxlength to align column."
   (let* ((data (gethash file table))
          (width* (or width (gethash dired-git-width-header table)))
-         (w-branch  (alist-get :branch width*))
-         (w-forward (alist-get :forward width*)))
+         (w-branch  (alist-get 'branch width*))
+         (w-forward (alist-get 'forward width*)))
     (if (not data)
         (concat
          ;; all-the-icons width equals 2 spaces
@@ -111,29 +111,29 @@ WIDTH stored maxlength to align column."
          (format "%s\t" "  ")
          (format (format "%%%ds\t" w-forward) " "))
       (let-alist data
-        ;; :branch :remote :ff :forward
+        ;; branch remote ff forward
         (concat
          (format (format "%%s %%-%ds\t" w-branch)
                  (all-the-icons-octicon "git-branch")
-                 (propertize .:branch 'face
-                             (if (string= "master" .:branch)
+                 (propertize .branch 'face
+                             (if (string= "master" .branch)
                                  'dired-git-branch-master
                                'dired-git-branch-else)))
          (format "%s\t"
                  (cond
-                  ((string= "true" .:ff)
+                  ((string= "true" .ff)
                    (all-the-icons-octicon "rocket"))
-                  ((string= "false" .:ff)
+                  ((string= "false" .ff)
                    (all-the-icons-octicon "x"))
-                  ((string= "missing" .:ff)
+                  ((string= "missing" .ff)
                    (all-the-icons-octicon "stop" :v-adjust -0.2))))
          (format "%s\t"
                  (cond
-                  ((string= "missing" .:ff)
+                  ((string= "missing" .ff)
                    (all-the-icons-octicon "stop" :v-adjust -0.2))
                   (t
                    (all-the-icons-octicon "diff-added"))))
-         (format (format "%%%ds\t" w-forward) .:forward))))))
+         (format (format "%%%ds\t" w-forward) .forward))))))
 
 (defun dired-git--promise-git-info (buf)
   "Return promise to get branch name for dired BUF."
@@ -165,11 +165,11 @@ else
 fi
 
 echo \\\"(\
- :file \\\\\\\"\\$PWD\\\\\\\"\
- :branch \\\\\\\"\\${branch}\\\\\\\"\
- :remote \\\\\\\"\\${remote}\\\\\\\"\
- :ff \\\\\\\"\\${ff}\\\\\\\"\
- :forward \\\\\\\"\\${forward}\\\\\\\"\
+ file \\\\\\\"\\$PWD\\\\\\\"\
+ branch \\\\\\\"\\${branch}\\\\\\\"\
+ remote \\\\\\\"\\${remote}\\\\\\\"\
+ ff \\\\\\\"\\${ff}\\\\\\\"\
+ forward \\\\\\\"\\${forward}\\\\\\\"\
 )\\\"
 \"
 "))
@@ -192,13 +192,13 @@ STDOUT is return value form `dired-git--promise-git-info'."
              (table (make-hash-table :test 'equal))
              width-alist)
          (dolist (elm info)
-           (puthash (plist-get elm :file)
-                    `((:branch  . ,(plist-get elm :branch))
-                      (:remote  . ,(plist-get elm :remote))
-                      (:ff      . ,(plist-get elm :ff))
-                      (:forward . ,(plist-get elm :forward)))
+           (puthash (plist-get elm 'file)
+                    `((branch  . ,(plist-get elm 'branch))
+                      (remote  . ,(plist-get elm 'remote))
+                      (ff      . ,(plist-get elm 'ff))
+                      (forward . ,(plist-get elm 'forward)))
                     table)
-           (dolist (key '(:branch :remote :ff :forward))
+           (dolist (key '(branch remote ff forward))
              (when-let ((width (string-width (plist-get elm key))))
                (when (< (or (alist-get key width-alist) 0) width)
                  (setf (alist-get key width-alist) width)))))
