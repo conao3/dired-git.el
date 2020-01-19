@@ -127,27 +127,23 @@ WIDTH stored maxlength to align column."
                                        'dired-git-branch-master
                                      'dired-git-branch-else)))
          (format (format "%%s\t%%-%ds\t" w-forward)
-                 (if (string= "0" .forward)
-                     "  "
-                   (cond
-                    ((string= "-" .forward)
-                     (all-the-icons-octicon "stop" :v-adjust 0.0))
-                    (t
-                     (all-the-icons-octicon "diff-added" :v-adjust 0.0))))
-                 (if (string= "0" .forward)
-                     ""
-                   .forward))
+                 (pcase .forward
+                   ("0" "  ")
+                   ("-" (all-the-icons-octicon "stop" :v-adjust 0.0))
+                   (_   (all-the-icons-octicon "diff-added" :v-adjust 0.0)))
+                 (pcase .forward
+                   ("0" "")
+                   ("-" "-")
+                   (_   .forward)))
          (format (format "%%s\t%%-%ds\t" w-behind)
-                 (if (string= "0" .behind)
-                     "  "
-                   (cond
-                    ((string= "-" .behind)
-                     (all-the-icons-octicon "stop" :v-adjust 0.0))
-                    (t
-                     (all-the-icons-octicon "diff-removed" :v-adjust 0.0))))
-                 (if (string= "0" .behind)
-                     ""
-                   .behind)))))))
+                 (pcase .behind
+                   ("0" "  ")
+                   ("-" (all-the-icons-octicon "stop" :v-adjust 0.0))
+                   (_   (all-the-icons-octicon "diff-removed" :v-adjust 0.0)))
+                 (pcase .behind
+                   ("0" "")
+                   ("-" "-")
+                   (_   .behind))))))))
 
 (defun dired-git--promise-git-info (buf)
   "Return promise to get branch name for dired BUF."
