@@ -44,12 +44,6 @@
   :group 'tools
   :link '(url-link :tag "Github" "https://github.com/conao3/dired-git.el"))
 
-(defvar dired-git-mode)
-(defvar dired-git-mode-map
-  (let ((map (make-sparse-keymap)))
-    map)
-  "Keymap of interactive commands.")
-
 (defcustom dired-git-disable-dirs '("~/")
   "List of directory that disables `dired-git' even if it is enabled."
   :group 'dired-git
@@ -91,6 +85,8 @@
 
 
 ;;; Function
+
+(defvar dired-git-mode)
 
 (defvar dired-git-width-header "**dired-git/width**"
   "String used as key to save width meta information.
@@ -364,9 +360,9 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
 ;;;###autoload
 (define-minor-mode dired-git-mode
   "Minor mode to add git information for dired."
-  :keymap dired-git-mode-map
   :lighter " Dired-git"
   :group 'dired-git
+  :keymap `((,(kbd "=") . dired-git-dispatch))
   (if (not (derived-mode-p 'dired-mode))
       (error "`dired-git-mode' is only compatible with `dired-mode'")
     (if dired-git-mode
