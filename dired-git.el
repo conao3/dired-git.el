@@ -292,7 +292,7 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
                 (prin1-to-string buf*) err)))))))
 
 ;;;###autoload
-(defun dired-git-dired-revert ()
+(defun dired-git-transient-dired-revert ()
   "Do dired-revert."
   (interactive)
   (dired-revert))
@@ -332,7 +332,7 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
    ("n" "dired-narrow" ignore)]
   ["Essential commands"
    :if-derived dired-mode
-   ("g" "       Refresh dired buffer"            dired-git-dired-revert)
+   ("g" "       Refresh dired buffer"            dired-git-transient-dired-revert)
    ("G" "       Refresh dired buffer with cache" dired-git-refresh-using-cache)
    ("?" "       Show all key bindings"           describe-mode)
    ("C-h m" "   Show all key bindings"           describe-mode)])
