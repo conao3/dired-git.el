@@ -304,6 +304,23 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
 ;;; Transient and dwim commands
 
 ;;; Mark/filter directory
+(define-transient-command dired-git-transient-mark ()
+  "Transient command to mark."
+  ;; See "Commands for marking and unmarking" section in `dired-mode-map'.
+  ["Mark"
+   [("m"   "Mark this"       dired-mark)
+    ("s"   "Mark all"        dired-mark-subdir-files)
+    ("*"   "Executables"     dired-mark-executables)
+    ("/"   "Directories"     dired-mark-directories)
+    ("@"   "Symlinks"        dired-mark-symlinks)
+    ("%"   "Regexp..."       dired-mark-files-regexp)
+    ("c"   "Change..."       dired-change-marks)]
+   [("u"   "Unmark this"     dired-unmark)
+    ("U"   "Unmark all"      dired-unmark-all-marks)]
+   [("177" "Unmark backward" dired-unmark-backward)
+    ("C-n" "Next mark"       dired-next-marked-file)
+    ("C-p" "Prev mark"       dired-prev-marked-file)
+    ("t"   "Toggle"          dired-toggle-marks)]])
 
 ;;; Essential commands
 ;;;###autoload
@@ -336,7 +353,7 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
    [("!" "Run"     ignore)]]
   ["Mark/filter directory"
    :if-derived dired-mode
-   ("M" "Mark"         ignore)
+   ("M" "Mark"         dired-git-transient-mark)
    ("/" "dired-filter" ignore)
    ("n" "dired-narrow" ignore)]
   ["Essential commands"
