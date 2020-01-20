@@ -315,7 +315,7 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
    [("!" "Run"     ignore)]]
   ["Mark/filter directory"
    :if-derived dired-mode
-   ("M" "Mark All"     ignore)
+   ("M" "Mark"         ignore)
    ("/" "dired-filter" ignore)
    ("n" "dired-narrow" ignore)]
   ["Essential commands"
