@@ -361,6 +361,7 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
 (define-minor-mode dired-git-mode
   "Minor mode to add git information for dired."
   :lighter " Dired-git"
+  :require 'dired-git
   :group 'dired-git
   :keymap `((,(kbd "=") . dired-git-dispatch))
   (if (not (derived-mode-p 'dired-mode))
