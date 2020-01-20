@@ -291,6 +291,11 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
   buffer: %s\n  reason: %s"
                 (prin1-to-string buf*) err)))))))
 
+(defun dired-git-refresh-using-cache ()
+  "Refresh git overlays using cache."
+  (interactive)
+  (dired-git-refresh nil 'cache))
+
 
 ;;; Minor mode management
 
@@ -336,7 +341,7 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
   "Advice function for FN with ARGS."
   (apply fn args)
   (when dired-git-mode
-    (dired-git-refresh nil 'cache)))
+    (dired-git-refresh-using-cache)))
 
 (defvar dired-git-advice-alist
   '((dired-readin                . dired-git--advice-refresh)
