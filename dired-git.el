@@ -129,8 +129,8 @@ WIDTH stored maxlength to align column."
          (format (format "%%s\t%%-%ds\t" w-forward)
                  (pcase .forward
                    ("0" "  ")
-                   ("-" (all-the-icons-octicon "stop" :v-adjust 0.0))
-                   (_   (all-the-icons-octicon "diff-added" :v-adjust 0.0)))
+                   ("-" (all-the-icons-octicon "stop" :v-adjust 0.0 :height 0.9))
+                   (_   (all-the-icons-octicon "diff-added" :v-adjust 0.0 :height 0.8)))
                  (pcase .forward
                    ("0" "")
                    ("-" "-")
@@ -138,8 +138,8 @@ WIDTH stored maxlength to align column."
          (format (format "%%s\t%%-%ds\t" w-behind)
                  (pcase .behind
                    ("0" "  ")
-                   ("-" (all-the-icons-octicon "stop" :v-adjust 0.0))
-                   (_   (all-the-icons-octicon "diff-removed" :v-adjust 0.0)))
+                   ("-" (all-the-icons-octicon "stop" :v-adjust 0.0 :height 0.9))
+                   (_   (all-the-icons-octicon "diff-removed" :v-adjust 0.0 :height 0.8)))
                  (pcase .behind
                    ("0" "")
                    ("-" "-")
