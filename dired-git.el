@@ -237,7 +237,7 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
         (funcall reject `(fail-add-annotation ,table ,err)))))))
 
 
-;;; Main
+;;; Interactive functions
 
 (async-defun dired-git-refresh (&optional buf cachep)
   "Refresh git overlays for BUF or `current-buffer'.
@@ -293,6 +293,9 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
           (warn "Fail dired-git-refresh
   buffer: %s\n  reason: %s"
                 (prin1-to-string buf*) err)))))))
+
+
+;;; Minor mode management
 
 (defun dired-git--advice-refresh (fn &rest args)
   "Advice function for FN with ARGS."
