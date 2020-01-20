@@ -297,6 +297,15 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
   (interactive)
   (dired-git-refresh nil 'cache))
 
+;;;; Transient interface commands
+
+;;; Git commands
+
+;;; Transient and dwim commands
+
+;;; Mark/filter directory
+
+;;; Essential commands
 ;;;###autoload
 (defun dired-git-transient-dired-revert ()
   "Do dired-revert."
@@ -309,7 +318,7 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
 ;;;###autoload (autoload 'dired-git-dispatch "dired-git" nil t)
 (define-transient-command dired-git-dispatch ()
   "Invoke a Dired-git command from a list of available commands."
-  ["Git command"
+  ["Git commands"
    ("C" "Clone"  ignore)]
   ["Transient and dwim commands"
    :if-derived dired-mode
