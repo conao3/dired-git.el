@@ -292,16 +292,16 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
                 (prin1-to-string buf*) err)))))))
 
 ;;;###autoload
-(defun dired-git-transient-dired-revert ()
-  "Do dired-revert."
-  (interactive)
-  (dired-revert))
-
-;;;###autoload
 (defun dired-git-refresh-using-cache ()
   "Refresh git overlays using cache."
   (interactive)
   (dired-git-refresh nil 'cache))
+
+;;;###autoload
+(defun dired-git-transient-dired-revert ()
+  "Do dired-revert."
+  (interactive)
+  (dired-revert))
 
 
 ;;; Minor mode management
