@@ -5,7 +5,7 @@
 ;; Author: Naoya Yamashita <conao3@gmail.com>
 ;; Version: 0.0.1
 ;; Keywords: tools
-;; Package-Requires: ((emacs "26.1") (async-await "1.0") (async "1.9.4") (all-the-icons "2.2.0"))
+;; Package-Requires: ((emacs "26.1") (async-await "1.0") (async "1.9.4") (all-the-icons "2.2.0") (transient "0.1.0"))
 ;; URL: https://github.com/conao3/dired-git.el
 
 ;; This program is free software: you can redistribute it and/or modify
@@ -36,6 +36,7 @@
 (require 'dired)
 (require 'async-await)
 (require 'all-the-icons)
+(require 'transient)
 
 (defgroup dired-git nil
   "Git integration for dired."
@@ -296,6 +297,38 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
 
 
 ;;; Minor mode management
+
+;;;###autoload (autoload 'dired-git-dispatch "dired-git" nil t)
+(define-transient-command dired-git-dispatch ()
+  "Invoke a Dired-git command from a list of available commands."
+  ["Git command"
+   ("C" "Clone"  ignore)]
+  ["Transient and dwim commands"
+   :if-derived dired-mode
+   [("b" "Branch"  ignore)
+    ("S" "Stage"   ignore)
+    ("U" "Unstage" ignore)
+    ("z" "Stash"   ignore)
+    ("X" "Reset"   ignore)]
+   [("c" "Commit"  ignore)
+    ("t" "Tag"     ignore)]
+   [("f" "Fetch"   ignore)
+    ("F" "Pull"    ignore)
+    ("m" "Merge"   ignore)
+    ("P" "Push"    ignore)]
+   [("!" "Run"     ignore)]]
+  ["Mark/filter directory"
+   :if-derived dired-mode
+   ("M" "Mark All"     ignore)
+   ("/" "dired-filter" ignore)
+   ("n" "dired-narrow" ignore)]
+  ["Essential commands"
+   :if-derived dired-mode
+   ("g" "       Refresh dired-git buffer"        ignore)
+   ("G" "       Refresh dired buffer"            ignore)
+   ("." "       Refresh dired buffer with cache" ignore)
+   ("?" "       Show all key bindings"           describe-mode)
+   ("C-h m" "   Show all key bindings"           describe-mode)])
 
 (defun dired-git--advice-refresh (fn &rest args)
   "Advice function for FN with ARGS."
