@@ -232,6 +232,11 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
        (error
         (funcall reject `(fail-add-annotation ,table ,err)))))))
 
+(defun dired-git--promise-shell-command (command dir)
+  "Return promise to do COMMAND in DIR."
+  (let ((default-directory dir))
+    (promise:make-process shell-file-name shell-command-switch command)))
+
 
 ;;; Interactive functions
 
