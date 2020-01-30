@@ -391,6 +391,12 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
   (dired-git--shell-command-in-marked-dirs "git stash pop"))
 
 ;;;###autoload
+(defun dired-git-reset-hard ()
+  "Reset --hard all for marked directories in dired buffer."
+  (interactive)
+  (dired-git--shell-command-in-marked-dirs "git reset --hard"))
+
+;;;###autoload
 (defun dired-git-branch (branch)
   "Checkout to BRANCH all for marked directories in dired buffer."
   (interactive (read-string "Branch name: "))
