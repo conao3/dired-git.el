@@ -390,6 +390,13 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
   (interactive)
   (dired-git--shell-command-in-marked-dirs "git stash pop"))
 
+;;;###autoload
+(defun dired-git-branch (branch)
+  "Checkout to BRANCH all for marked directories in dired buffer."
+  (interactive (read-string "Branch name: "))
+  (dired-git--shell-command-in-marked-dirs
+   (format "git checkout %s" (shell-quote-argument branch))))
+
 
 ;;; Minor mode management
 
