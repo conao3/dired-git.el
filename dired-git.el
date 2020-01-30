@@ -349,13 +349,15 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
                      (ppp-plist-to-string
                       (list :dir dir :command command)))))))))))))
 
+(defun dired-git--shell-command-in-marked-dirs (command)
+  "Do COMMAND in directories marked dired buffer."
+  (dired-git--shell-command-in-dirs command (dired-get-marked-files)))
+
 ;;;###autoload
 (defun dired-git-status ()
   "Status with for marked directories in dired buffer."
   (interactive)
-  (dired-git--shell-command-in-dirs
-   "git status"
-   (dired-get-marked-files)))
+  (dired-git--shell-command-in-marked-dirs "git status"))
 
 
 ;;; Minor mode management
