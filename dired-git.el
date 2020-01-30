@@ -349,6 +349,31 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
                      (ppp-plist-to-string
                       (list :dir dir :command command)))))))))))))
 
+(setq promise
+      (with-current-buffer "repos"
+        (dired-git--shell-command-in-marked-dirs
+         "git rev-parse --is-inside-work-dir >/dev/null 2>&1 || exit 0
+if [ \"true\" = \"\$(git rev-parse --is-inside-git-dir)\" ]; then exit 0; fi
+if [ \"\$PWD\" != \"\$(git rev-parse --show-toplevel)\" ]; then exit 0; fi
+branch=\"\$(git symbolic-ref --short HEAD)\"
+remote=\"\$(git config --get branch.\${branch}.remote)\"
+
+git rev-parse \${remote}/\${branch} >/dev/null 2>&1
+if [ 0 -ne \$? ]; then
+  forward=\"-\"
+  behind=\"-\"
+else
+  forward=\"\$(git log \${remote}/\${branch}..\${branch} --oneline | wc -l)\"
+  behind=\"\$(git log \${branch}..\${remote}/\${branch} --oneline | wc -l)\"
+fi
+
+echo \"(
+ file \\\"\$PWD\\\"
+ branch \\\"\${branch}\\\"
+ remote \\\"\${remote}\\\"
+)\"
+")))
+
 (defun dired-git--shell-command-in-marked-dirs (command)
   "Do COMMAND in directories marked dired buffer."
   (dired-git--shell-command-in-dirs command (dired-get-marked-files)))
