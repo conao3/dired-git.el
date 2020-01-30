@@ -404,6 +404,12 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
   (dired-git--shell-command-in-marked-dirs
    (format "git tag %s" (shell-quote-argument tag))))
 
+;;;###autoload
+(defun dired-git-fetch ()
+  "Fetch all for marked directories in dired buffer."
+  (interactive)
+  (dired-git--shell-command-in-marked-dirs "git fetch --all"))
+
 
 ;;; Minor mode management
 
