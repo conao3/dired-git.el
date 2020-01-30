@@ -5,7 +5,7 @@
 ;; Author: Naoya Yamashita <conao3@gmail.com>
 ;; Version: 0.0.1
 ;; Keywords: tools
-;; Package-Requires: ((emacs "26.1") (async-await "1.0") (async "1.9.4") (all-the-icons "2.2.0"))
+;; Package-Requires: ((emacs "26.1") (async-await "1.0") (async "1.9.4") (all-the-icons "2.2.0") (ppp "1.0.0"))
 ;; URL: https://github.com/conao3/dired-git.el
 
 ;; This program is free software: you can redistribute it and/or modify
@@ -33,9 +33,11 @@
 
 (require 'cl-lib)
 (require 'seq)
+(require 'subr-x)
 (require 'dired)
 (require 'async-await)
 (require 'all-the-icons)
+(require 'ppp)
 
 (defgroup dired-git nil
   "Git integration for dired."
@@ -47,6 +49,11 @@
   "List of directory that disables `dired-git' even if it is enabled."
   :group 'dired-git
   :type 'sexp)
+
+(defcustom dired-git-parallel 4
+  "Number of parallel processes."
+  :group 'dired-git
+  :type 'integer)
 
 (defface dired-git-branch-master
   '((t (:foreground "SpringGreen" :weight bold)))
@@ -232,11 +239,6 @@ TABLE is hash table returned value by `dired-git--promise-git-info'."
        (error
         (funcall reject `(fail-add-annotation ,table ,err)))))))
 
-(defun dired-git--promise-shell-command (command dir)
-  "Return promise to do COMMAND in DIR."
-  (let ((default-directory dir))
-    (promise:make-process shell-file-name shell-command-switch command)))
-
 
 ;;; Interactive functions
 
@@ -300,6 +302,60 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
   "Refresh git overlays using cache."
   (interactive)
   (dired-git-refresh nil 'cache))
+
+(defun dired-git--promise-shell-command (command dir)
+  "Return promise to do COMMAND in DIR."
+  (let ((default-directory dir))
+    (promise:make-process shell-file-name shell-command-switch command)))
+
+(async-defun dired-git--shell-command-in-dirs (command dirs)
+  "Do COMMAND in DIRS.
+COMMAND is invoked in parallel number of `dired-git-parallel'."
+  (let ((files (cl-remove-if     #'file-directory-p dirs))
+        (dirs* (cl-remove-if-not #'file-directory-p dirs)))
+    (when files
+      (user-error "Directory is needed, filtered: %s" (string-join files ", ")))
+    (while dirs*
+      (let (pick)
+        (dotimes (_ dired-git-parallel)
+          (push (pop dirs*) pick))
+        (ppp-debug 'dired-git
+          "Invoke command for dirs\n%s"
+          (ppp-plist-to-string
+           (list :command command :dirs pick)))
+        (let ((info
+               (mapcar
+                (lambda (elm)
+                  (when elm
+                    `(,elm ,(dired-git--promise-shell-command command elm))))
+                pick)))
+          (dolist (elm info)
+            (when elm
+              (seq-let (dir promise) elm
+                (condition-case _err
+                    (seq-let (stdout stderr) (await promise)
+                      (if (not (string-empty-p stderr))
+                          (ppp-debug :level :error 'dired-git
+                            "stderr is non-nil:\n%s"
+                            (ppp-plist-to-string
+                             (list :dir dir :command command :stdout stdout :stderr stderr)))
+                        (ppp-debug 'dired-git
+                          "Command exit normally\n%s"
+                          (ppp-plist-to-string
+                           (list :dir dir :command command :stdout stdout)))))
+                  (error
+                   (ppp-debug :level :error 'dired-git
+                     "Unknown error:\n%s"
+                     (ppp-plist-to-string
+                      (list :dir dir :command command)))))))))))))
+
+;;;###autoload
+(defun dired-git-status ()
+  "Status with for marked directories in dired buffer."
+  (interactive)
+  (dired-git--shell-command-in-dirs
+   "git status"
+   (dired-get-marked-files)))
 
 
 ;;; Minor mode management
