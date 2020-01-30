@@ -366,6 +366,12 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
   (dired-git--shell-command-in-marked-dirs
    (format "git commit -am \"%s\"" (shell-quote-argument msg))))
 
+;;;###autoload
+(defun dired-git-stage ()
+  "Stage all for marked directories in dired buffer."
+  (interactive)
+  (dired-git--shell-command-in-marked-dirs "git add -A"))
+
 
 ;;; Minor mode management
 
