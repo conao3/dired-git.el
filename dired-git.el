@@ -397,6 +397,13 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
   (dired-git--shell-command-in-marked-dirs
    (format "git checkout %s" (shell-quote-argument branch))))
 
+;;;###autoload
+(defun dired-git-tag (tag)
+  "Tag current HEAD to TAG all for marked directories in dired buffer."
+  (interactive (read-string "Branch name: "))
+  (dired-git--shell-command-in-marked-dirs
+   (format "git tag %s" (shell-quote-argument tag))))
+
 
 ;;; Minor mode management
 
