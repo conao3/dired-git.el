@@ -429,6 +429,13 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
   (interactive)
   (dired-git--shell-command-in-marked-dirs "git push"))
 
+;;;###autoload
+(defun dired-git-run (command)
+  "Invoke COMMAND for marked directories in dired buffer."
+  (interactive (read-string "Command: " "git "))
+  (dired-git--shell-command-in-marked-dirs
+   (mapconcat #'shell-quote-argument (split-string command " ") " ")))
+
 
 ;;; Minor mode management
 
