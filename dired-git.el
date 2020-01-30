@@ -416,6 +416,13 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
   (interactive)
   (dired-git--shell-command-in-marked-dirs "git pull"))
 
+;;;###autoload
+(defun dired-git-merge (branch)
+  "Merge BRANCH for marked directories in dired buffer."
+  (interactive (read-string "Branch name: "))
+  (dired-git--shell-command-in-marked-dirs
+   (format "git merge %s" branch)))
+
 
 ;;; Minor mode management
 
