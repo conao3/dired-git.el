@@ -378,6 +378,12 @@ COMMAND is invoked in parallel number of `dired-git-parallel'."
   (interactive)
   (dired-git--shell-command-in-marked-dirs "git reset --mixed"))
 
+;;;###autoload
+(defun dired-git-stash ()
+  "Stash all for marked directories in dired buffer."
+  (interactive)
+  (dired-git--shell-command-in-marked-dirs "git stash"))
+
 
 ;;; Minor mode management
 
