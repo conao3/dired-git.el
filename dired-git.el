@@ -154,9 +154,10 @@ WIDTH stored maxlength to align column."
    (let ((default-directory (with-current-buffer buf
                               dired-directory)))
      (promise:make-process
-      shell-file-name
-      shell-command-switch
-      "find . -mindepth 1 -maxdepth 1 -type d | sort | tr \\\\n \\\\0 | \
+      (list
+       shell-file-name
+       shell-command-switch
+       "find . -mindepth 1 -maxdepth 1 -type d | sort | tr \\\\n \\\\0 | \
 xargs -0 -I^ sh -c \"
 cd ^
 git rev-parse --is-inside-work-dir >/dev/null 2>&1 || exit 0
@@ -182,7 +183,7 @@ echo \\\"(\
  behind \\\\\\\"\\${behind}\\\\\\\"\
 )\\\"
 \"
-"))
+")))
    (lambda (res)
      (seq-let (stdout stderr) res
        (if (not (string-empty-p stderr))
@@ -306,7 +307,7 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
 (defun dired-git--promise-shell-command (command dir)
   "Return promise to do COMMAND in DIR."
   (let ((default-directory dir))
-    (promise:make-process shell-file-name shell-command-switch command)))
+    (promise:make-process (list shell-file-name shell-command-switch command))))
 
 (async-defun dired-git--shell-command-in-dirs (command dirs)
   "Do COMMAND in DIRS.
