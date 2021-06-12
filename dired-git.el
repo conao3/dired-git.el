@@ -159,7 +159,7 @@ WIDTH stored maxlength to align column."
        shell-command-switch
        "find . -mindepth 1 -maxdepth 1 -type d | sort | tr \\\\n \\\\0 | \
 xargs -0 -I^ sh -c \"
-cd ^
+cd '^'
 git rev-parse --is-inside-work-dir >/dev/null 2>&1 || exit 0
 if [ \\\"true\\\" = \\\"\\$(git rev-parse --is-inside-git-dir)\\\" ]; then exit 0; fi
 if [ \\\"\\$PWD\\\" != \\\"\\$(git rev-parse --show-toplevel)\\\" ]; then exit 0; fi
