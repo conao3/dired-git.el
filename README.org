@@ -1,103 +1,121 @@
-#+author: conao3
-#+date: <2018-10-25 Thu>
+#+title: dired-git.el
+#+author: Naoya Yamashita
 
 [[https://github.com/conao3/dired-git.el][https://raw.githubusercontent.com/conao3/files/master/blob/headers/png/dired-git.el.png]]
+
 [[https://github.com/conao3/dired-git.el/blob/master/LICENSE][https://img.shields.io/github/license/conao3/dired-git.el.svg?style=flat-square]]
 [[https://github.com/conao3/dired-git.el/releases][https://img.shields.io/github/tag/conao3/dired-git.el.svg?style=flat-square]]
 [[https://github.com/conao3/dired-git.el/actions][https://github.com/conao3/dired-git.el/workflows/Main%20workflow/badge.svg]]
-[[https://app.codacy.com/project/conao3/dired-git.el/dashboard][https://img.shields.io/codacy/grade/62a36f4f04524d5e8c758440e8071c45.svg?logo=codacy&style=flat-square]]
-[[https://twitter.com/conao_3][https://img.shields.io/badge/twitter-@conao__3-blue.svg?logo=twitter&style=flat-square]]
-[[https://conao3-support.slack.com/join/shared_invite/enQtNjUzMDMxODcyMjE1LWUwMjhiNTU3Yjk3ODIwNzAxMTgwOTkxNmJiN2M4OTZkMWY0NjI4ZTg4MTVlNzcwNDY2ZjVjYmRiZmJjZDU4MDE][https://img.shields.io/badge/chat-on_slack-blue.svg?logo=slack&style=flat-square]]
 
-* Table of Contents
-- [[#description][Description]]
-- [[#install][Install]]
-- [[#usage][Usage]]
-- [[#customize][Customize]]
-- [[#syntaxes][Syntaxes]]
-- [[#information][Information]]
-  - [[#community][Community]]
-  - [[#contribution][Contribution]]
-  - [[#migration][Migration]]
-  - [[#license][License]]
-  - [[#author][Author]]
-  - [[#contributors][Contributors]]
-  - [[#special-thanks][Special Thanks]]
+Git integration for Emacs dired. Display branch names, ahead/behind counts, and perform batch Git operations directly from your directory listings.
 
-* Description
-Display Git repository information in dired.
+* Features
 
-M-x dired-git-mode
+- Display Git branch information alongside directory entries
+- Show commits ahead/behind remote tracking branch
+- Execute Git commands on multiple marked directories at once
+- Asynchronous processing for responsive UI
+- Integration with =all-the-icons= for visual indicators
+
+* Screenshots
+
+With =dired-git-mode= enabled:
 [[https://raw.githubusercontent.com/conao3/files/master/blob/dired-git.el/dired-git.png]]
 
-M-x dired-git-mode with dired-hide-details-mode
+Combined with =dired-hide-details-mode=:
 [[https://raw.githubusercontent.com/conao3/files/master/blob/dired-git.el/dired-git-summary.png]]
 
-* Install
-Install this package via MELPA.
+* Requirements
+
+- Emacs 26.1 or later
+- [[https://github.com/chuntaro/emacs-async-await][async-await]]
+- [[https://github.com/jwiegley/emacs-async][async]]
+- [[https://github.com/domtronn/all-the-icons.el][all-the-icons]]
+- [[https://github.com/conao3/ppp.el][ppp]]
+
+* Installation
+
+** MELPA
+
+Install =dired-git= from MELPA:
+
+#+begin_src emacs-lisp
+(use-package dired-git
+  :hook (dired-mode . dired-git-mode))
+#+end_src
+
+** Manual
+
+Clone the repository and add it to your load path:
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/path/to/dired-git.el")
+(require 'dired-git)
+(add-hook 'dired-mode-hook 'dired-git-mode)
+#+end_src
 
 * Usage
-To use this package, simply add this to your init.el
+
+Enable =dired-git-mode= in dired buffers to display Git information. The mode shows:
+
+- Branch name with color coding (green for master/main, cyan for others)
+- Number of commits ahead of remote (with + icon)
+- Number of commits behind remote (with - icon)
+
+** Batch Operations
+
+Mark directories in dired and use these commands to operate on all of them:
+
+| Key | Command                | Description                              |
+|-----+------------------------+------------------------------------------|
+| =   | =dired-git-dispatch=   | Prefix key for Git commands              |
+
+Available commands:
+- =dired-git-status= - Show git status
+- =dired-git-fetch= - Fetch from all remotes
+- =dired-git-pull= - Pull from remote
+- =dired-git-push= - Push to remote
+- =dired-git-stage= - Stage all changes
+- =dired-git-unstage= - Unstage all changes
+- =dired-git-commit= - Commit with message
+- =dired-git-stash= - Stash changes
+- =dired-git-stash-pop= - Pop stashed changes
+- =dired-git-branch= - Switch branch
+- =dired-git-merge= - Merge branch
+- =dired-git-tag= - Create tag
+- =dired-git-reset-hard= - Hard reset
+- =dired-git-run= - Run arbitrary git command
+
+* Configuration
+
+** Exclude Directories
+
+Disable Git information display for specific directories:
+
 #+begin_src emacs-lisp
-  (add-hook 'dired-mode-hook 'dired-git-mode)
+(setq dired-git-disable-dirs '("~/"))
 #+end_src
 
-* Customize
+** Parallel Processing
 
-* Information
-** Community
-All feedback and suggestions are welcome!
+Control the number of parallel Git processes:
 
-You can use github issues, but you can also use [[https://conao3-support.slack.com/join/shared_invite/enQtNjUzMDMxODcyMjE1LWUwMjhiNTU3Yjk3ODIwNzAxMTgwOTkxNmJiN2M4OTZkMWY0NjI4ZTg4MTVlNzcwNDY2ZjVjYmRiZmJjZDU4MDE][Slack]]
-if you want a more casual conversation.
-
-** Contribution
-We welcome PR!
-
-*** Require tools for testing
-- cask
-  - install via brew
-    #+begin_src shell
-      brew install cask
-    #+end_src
-
-  - manual install
-    #+begin_src shell
-      cd ~/
-      hub clone cask/cask
-      export PATH="$HOME/.cask/bin:$PATH"
-    #+end_src
-
-*** Running test
-Below operation flow is recommended.
-#+begin_src shell
-  make                              # Install git-hooks in local .git
-
-  git branch [feature-branch]       # Create branch named [feature-branch]
-  git checkout [feature-branch]     # Checkout branch named [feature-branch]
-
-  # <edit loop>
-  emacs dired-git.el                # Edit something you want
-
-  make test                         # Test dired-git via multi version Emacs
-  git commit -am "brabra"           # Commit (auto-run test before commit)
-  # </edit loop>
-
-  hub fork                          # Create fork at GitHub
-  git push [user] [feature-branch]  # Push feature-branch to your fork
-  hub pull-request                  # Create pull-request
+#+begin_src emacs-lisp
+(setq dired-git-parallel 4)  ; default
 #+end_src
 
-** Migration
+* Contributing
 
-** License
-#+begin_example
-  General Public License Version 3 (GPLv3)
-  Copyright (c) Naoya Yamashita - https://conao3.com
-  https://github.com/conao3/dired-git.el/blob/master/LICENSE
-#+end_example
+Contributions are welcome. Please open an issue or submit a pull request on GitHub.
 
-** Author
-- Naoya Yamashita ([[https://github.com/conao3][conao3]])
+** Development Setup
 
-** Contributors
+1. Install [[https://github.com/cask/cask][Cask]] for dependency management
+2. Run =make= to set up git hooks
+3. Run =make test= to run the test suite
+
+* License
+
+GPL-3.0. See [[https://github.com/conao3/dired-git.el/blob/master/LICENSE][LICENSE]] for details.
+
+Copyright (C) Naoya Yamashita
