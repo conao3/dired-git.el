@@ -258,7 +258,7 @@ IF CACHEP is non-nil and cache is avairable, use it and omit invoke shell comman
                      (not dired-git-working)
                      (not (member
                            (expand-file-name dired-directory)
-                           (mapcar 'expand-file-name dired-git-disable-dirs)))))
+                           (mapcar #'expand-file-name dired-git-disable-dirs)))))
           (with-current-buffer buf*
             (setq-local tab-width 1)
             (setq-local dired-git-working t)
